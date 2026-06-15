@@ -1,0 +1,297 @@
+:root {
+  /* PERFECT VERTICAL RHYTHM VARIABLES */
+  --grid-size: 32px;
+  /* Strict grid height for everything */
+  --baseline-offset: 31px;
+  /* Positions the line at the exact bottom of the text row */
+
+  --grid-line: rgba(43, 58, 85, 0.12);
+  /* Faint navy/grey grid lines matching the new notebook image */
+  --paper-bg: #fdfaf0;
+  /* Warm cream paper background matching the new notebook image */
+  --ink-navy: #2b3a55;
+  /* The dark navy color for the notebook borders */
+
+  /* Ink Colors for Notes */
+  --ink-black: #1e293b;
+  --ink-blue: #2563eb;
+  --ink-red: #dc2626;
+  --ink-green: #059669;
+
+  /* Highlighters (Pastels) */
+  --hl-yellow: #fef08a;
+  --hl-pink: #fecdd3;
+  --hl-blue: #bfdbfe;
+  --hl-green: #a7f3d0;
+}
+
+/* * STRICT CSS RESET 
+      * To keep text on the grid, we must eliminate all default margins/paddings.
+      */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--paper-bg);
+  color: var(--ink-black);
+  font-family: 'Comic Neue', cursive, sans-serif;
+  font-size: 18px;
+  line-height: var(--grid-size);
+  padding: 40px 20px 80px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* NOTEBOOK LAYOUT (Replicating the uploaded image) */
+.notebook-wrapper {
+  width: 100%;
+  max-width: 800px;
+}
+
+/* The Date & Days Header (Outside the box) */
+.notebook-header {
+  font-family: 'Space Mono', monospace;
+  color: var(--ink-navy);
+  font-size: 14px;
+  margin-bottom: 12px;
+  padding-left: 12px;
+  width: 240px;
+  /* Fixed width to perfectly align both rows */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.date-label {
+  letter-spacing: 6px;
+}
+
+.date-value {
+  letter-spacing: 1px;
+}
+
+.days-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.days-row span {
+  text-align: center;
+  width: 24px;
+  text-transform: lowercase;
+}
+
+.days-row span.active {
+  background-color: var(--hl-yellow);
+  border-radius: 4px;
+  font-weight: bold;
+  color: var(--ink-black);
+  padding: 2px 0;
+  margin: -2px 0;
+  /* Offsets the padding to keep alignment strict */
+}
+
+/* The Main Bordered Box */
+.notebook-box {
+  border: 1px solid var(--ink-navy);
+  background-color: transparent;
+  min-height: 800px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The Title Row (Inside the box, top) */
+.notebook-title-row {
+  border-bottom: 1px solid var(--ink-navy);
+  padding: 6px 12px;
+  font-family: 'Space Mono', monospace;
+  color: var(--ink-navy);
+  font-size: 16px;
+  letter-spacing: 1px;
+  /* Ensures this row doesn't break the grid math for the content below */
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+/* The Grid Area (Where the notes go) */
+.notebook-grid-content {
+  flex: 1;
+  /* The Graph Paper Grid applied ONLY inside the box */
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: 0 var(--baseline-offset);
+
+  /* Padding ensures text aligns to the background grid */
+  padding: var(--grid-size) 32px calc(var(--grid-size) * 3) 32px;
+}
+
+/* * VERTICAL RHYTHM TYPOGRAPHY inside the grid */
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+li,
+div {
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  margin-bottom: var(--grid-size);
+  /* 1 blank line below paragraphs */
+}
+
+h1 {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 42px;
+  color: var(--ink-black);
+  line-height: calc(var(--grid-size) * 2);
+  /* Takes exactly 2 lines */
+  margin-bottom: var(--grid-size);
+  text-align: center;
+}
+
+h2 {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 28px;
+  color: var(--ink-blue);
+  line-height: var(--grid-size);
+  /* Takes exactly 1 line */
+  margin-bottom: var(--grid-size);
+}
+
+/* Lists */
+ul,
+ol {
+  margin-bottom: var(--grid-size);
+  padding-left: 32px;
+  list-style-type: none;
+}
+
+li {
+  position: relative;
+  margin-bottom: 0;
+}
+
+ul li::before {
+  content: "•";
+  position: absolute;
+  left: -20px;
+  color: var(--ink-blue);
+  font-weight: bold;
+}
+
+ol {
+  counter-reset: note-counter;
+}
+
+ol li::before {
+  counter-increment: note-counter;
+  content: counter(note-counter) ".";
+  position: absolute;
+  left: -24px;
+  color: var(--ink-red);
+  font-family: 'Patrick Hand', cursive;
+  font-weight: bold;
+}
+
+/* Highlighter Effects */
+.hl-yellow,
+.hl-pink,
+.hl-blue,
+.hl-green {
+  border-radius: 2px;
+}
+
+.hl-yellow {
+  background-color: var(--hl-yellow);
+}
+
+.hl-pink {
+  background-color: var(--hl-pink);
+}
+
+.hl-blue {
+  background-color: var(--hl-blue);
+}
+
+.hl-green {
+  background-color: var(--hl-green);
+}
+
+/* Boxes & Callouts */
+.callout-box {
+  box-shadow: inset 0 0 0 2px var(--ink-blue);
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: var(--grid-size) 32px 0 32px;
+  margin-bottom: var(--grid-size);
+}
+
+.callout-box.red-ink {
+  box-shadow: inset 0 0 0 2px var(--ink-red);
+  background-color: rgba(254, 242, 242, 0.7);
+}
+
+/* Text colors */
+.text-blue {
+  color: var(--ink-blue);
+}
+
+.text-red {
+  color: var(--ink-red);
+}
+
+.text-green {
+  color: var(--ink-green);
+}
+
+.bold {
+  font-weight: 700;
+}
+
+/* Arrows */
+.arrow {
+  color: var(--ink-red);
+  font-family: 'Patrick Hand', cursive;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Small annotations */
+.annotation {
+  display: block;
+  color: var(--ink-red);
+  font-family: 'Patrick Hand', cursive;
+  text-align: center;
+  margin-bottom: var(--grid-size);
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 20px 10px;
+  }
+
+  .notebook-grid-content {
+    padding: var(--grid-size) 16px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+}
