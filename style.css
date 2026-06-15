@@ -319,22 +319,22 @@ ol li::before {
   .nav-sidebar {
     position: static;
     width: 48%;
-    margin: 0 0 20px 0;
+    margin: 20px 0 0 0;
   }
   .nav-prev {
-    order: 1;
+    order: 3;
     text-align: left;
   }
   .nav-next {
-    order: 2;
+    order: 4;
     text-align: right;
   }
   .notebook-header {
-    order: 3;
+    order: 1;
     width: 100%;
   }
   .notebook-box {
-    order: 4;
+    order: 2;
     width: 100%;
   }
 }
