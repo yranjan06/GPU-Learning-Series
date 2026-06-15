@@ -287,13 +287,13 @@ ol li::before {
 .nav-sidebar {
   position: absolute;
   top: 140px;
-  font-family: 'Patrick Hand', cursive;
-  font-size: 24px;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
   text-decoration: none;
-  color: var(--ink-blue);
-  font-weight: bold;
+  color: var(--ink-navy);
+  font-weight: normal;
   width: 180px;
-  line-height: 1.2;
+  line-height: 1.5;
 }
 .nav-sidebar:hover {
   text-decoration: underline;
