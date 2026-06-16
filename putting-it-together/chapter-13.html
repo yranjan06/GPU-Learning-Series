@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inside the Silicon - Chapter 10: Why occupancy matters</title>
+  <title>Putting it Together - Chapter 13: GPUs with CPU-style caches?</title>
 
   <!-- Handwriting and casual fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,18 +22,17 @@
   <div class="notebook-wrapper">
 
     <!-- Sidebar Navigation -->
-    <a href="chapter-9.html" class="nav-sidebar nav-prev">← Chapter 9: What is SIMT?</a>
-    <a href="../putting-it-together/chapter-11.html" class="nav-sidebar nav-next">Chapter 11: Why GPUs suit deep learning →</a>
-
+    <a href="chapter-12.html" class="nav-sidebar nav-prev">← Chapter 12: Latency hiding</a>
+    <a href="chapter-14.html" class="nav-sidebar nav-next">Chapter 14: Memory wall & HBM →</a>
 
     <!-- Notebook Header (Date and Days) -->
     <div class="notebook-header">
       <div class="date-row">
         <span class="date-label">date</span>
-        <span class="date-value">24 / jun / 26</span>
+        <span class="date-value">27 / jun / 26</span>
       </div>
       <div class="days-row">
-        <span>m</span><span>t</span><span class="active">w</span><span>t</span><span>f</span><span>s</span><span>s</span>
+        <span>m</span><span>t</span><span>w</span><span>t</span><span>f</span><span class="active">s</span><span>s</span>
       </div>
     </div>
 
@@ -41,14 +40,14 @@
     <div class="notebook-box">
 
       <div class="notebook-title-row">
-        <span><span class="title-prefix">INSIDE THE SILICON — </span>Chapter 10</span>
+        <span><span class="title-prefix">PUTTING IT TOGETHER — </span>Chapter 13</span>
         <a href="../index.html" class="index-link">index</a>
       </div>
 
       <div class="notebook-grid-content">
 
         <!-- Title -->
-        <h1><span class="hl-yellow">Why occupancy matters</span></h1>
+        <h1><span class="hl-yellow">GPUs with CPU-style caches?</span></h1>
         <span class="annotation">*worked out from first principles*</span>
 
         <!-- Introduction -->
