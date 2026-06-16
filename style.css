@@ -131,8 +131,9 @@ body {
   color: var(--ink-navy);
   text-decoration: none;
   font-size: 13px;
+  line-height: 1;
   border: 1px solid var(--ink-navy);
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 4px;
   text-transform: lowercase;
   transition: background-color 0.2s, color 0.2s;
