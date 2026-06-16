@@ -326,8 +326,28 @@ ol li::before {
 }
 
 .phase-content {
+  position: relative;
   border-right: 2px solid var(--ink-red);
   padding-right: 24px;
+}
+
+/* Horizontal ticks at the top and bottom to represent range */
+.phase-content::before,
+.phase-content::after {
+  content: "";
+  position: absolute;
+  right: -2px; /* Aligns with the 2px border */
+  width: 12px;
+  height: 2px;
+  background-color: var(--ink-red);
+}
+
+.phase-content::before {
+  top: 0;
+}
+
+.phase-content::after {
+  bottom: 0;
 }
 
 .phase-label {
