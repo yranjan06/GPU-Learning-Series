@@ -51,7 +51,7 @@
 
         <!-- Introduction -->
         <p>
-          Last chapter, we broke down why a CPU can't have 10,000 cores. This is the other half — why a GPU can, and why it only wins at one very specific shape of work.
+          Last chapter, we broke down why a CPU can't have 10,000 cores. This is the other half: why a GPU can, and why it only wins at one very specific shape of work.
         </p>
         
         <p>
@@ -87,7 +87,7 @@
         <h2><span class="hl-pink">A CPU goes serial</span></h2>
 
         <p>
-          A CPU has a few big, fast, expensive cores. So it does the only thing it can — it goes serial. Cell 1, then Cell 2, then Cell 3, one clock cycle after another.
+          A CPU has a few big, fast, expensive cores. So it does the only thing it can: it goes serial. Cell 1, then Cell 2, then Cell 3, one clock cycle after another.
         </p>
 
         <p>
@@ -98,7 +98,7 @@
         <h2><span class="hl-yellow">A GPU splits the work</span></h2>
 
         <p>
-          A GPU looks at those same 100 million independent cells and asks the obvious question — <em>why are we standing in a line at all?</em>
+          A GPU looks at those same 100 million independent cells and asks the obvious question: <em>why are we standing in a line at all?</em>
         </p>
 
         <p>
@@ -113,7 +113,7 @@
         </p>
 
         <ol>
-          <li><strong>The ALU (Arithmetic Logic Unit) is the worker.</strong> And here's the surprise — the worker is dumb. It's just a circuit of transistors. It cannot think. It has no memory of its own. It sits there and waits to be told what to do.</li>
+          <li><strong>The ALU (Arithmetic Logic Unit) is the worker.</strong> And here's the surprise: the worker is dumb. It's just a circuit of transistors. It cannot think. It has no memory of its own. It sits there and waits to be told what to do.</li>
           <li><strong>The Control Unit is the manager.</strong> It reads the code and drives the ALU. It fetches the numbers, sends an electrical signal (like 001 for add, 010 for subtract), which flips the right transistors inside the ALU to drop the answer out.</li>
         </ol>
 
@@ -188,7 +188,10 @@
           <h2 class="text-red">The General Takeaway</h2>
 
           <p>
-            Don't count cores — look at the shape of the work. Unpredictable, branchy, one-thing-depends-on-the-last work belongs on a CPU. Identical, independent, thousands-at-once grid work belongs on a GPU.
+            Don't count cores.
+            Is the job unpredictable, step-by-step, and full of dependencies? Call the CPU, the Ferrari that dodges
+            traffic alone. Is the job uniform, independent, and thousands wide on a grid? Unleash the GPU, the fleet of
+            buses moving everyone at once.
           </p>
 
           <p class="text-red bold" style="font-family: 'Patrick Hand', cursive; font-size: 24px; text-align: center;">
