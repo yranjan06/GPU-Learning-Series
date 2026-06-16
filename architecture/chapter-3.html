@@ -77,7 +77,7 @@
           Let's look at the same hardware across three tasks that sit at completely different points on the dependency scale.
         </p>
 
-        <h3>1. Matrix multiplication: perfectly parallel</h3>
+        <h2><span class="hl-green">1. Matrix multiplication: perfectly parallel</span></h2>
         <p>
           Every cell of the output has its own formula and reads only the original inputs. The cell at row 1, column 1 does not care what the cell at row 5, column 2 is doing. There is no sharing of results, no order, and no waiting. 
         </p>
@@ -85,7 +85,7 @@
           A GPU looks at this, sees that everything is independent, shatters the task into millions of pieces, and hands each to its own tiny core. They all run at once. The cores never have to talk to each other. Zero communication. This is the dream case: and it's exactly why AI, which is mostly matrix math, lives on GPUs.
         </p>
 
-        <h3>2. Sorting: half parallel, then a wall</h3>
+        <h2><span class="hl-yellow">2. Sorting: half parallel, then a wall</span></h2>
         <p>
           Take merge sort. The start is genuinely parallel. You have 10,000 numbers, you split them into four chunks, you hand each chunk to its own core, and all four sort their piece at the same time. Great, free speedup.
         </p>
@@ -93,7 +93,7 @@
           But then comes the merge. To fuse those four sorted chunks into one final sorted list, the cores have to compare elements across the chunks. This means they have to look at each other's data and coordinate. That final merge cannot be done by everyone at once. Cores slow down, they wait, they take turns. Sorting starts as a sprint and ends in a traffic jam: partly parallel, partly serial, and the serial tail caps how fast it can ever go.
         </p>
 
-        <h3>3. Linked-list traversal: strictly serial, no escape</h3>
+        <h2><span class="hl-pink">3. Linked-list traversal: strictly serial, no escape</span></h2>
         <p>
           A linked list is a treasure hunt. Each block holds its own data plus the address of the next block, and nothing else. You do not know where item 2 lives until you have read item 1. You cannot reach item 5 without walking through 1, 2, 3, and 4 first. There is no shortcut, and no way to guess ahead.
         </p>
@@ -101,15 +101,17 @@
           Here, you can own 10,000 cores and exactly one of them will ever do work. The other 9,999 sit there swatting flies, because not one of them knows where to go next until the one working core tells them. Some problems are serial in their soul, and no hardware on earth can parallelize them.
         </p>
 
-        <div class="callout-box">
-          <p><strong>The three shapes lined up:</strong></p>
-          <ul>
-            <li><strong>Matrix math:</strong> fully independent, runs everywhere at once.</li>
-            <li><strong>Sorting:</strong> independent at first, then forced to coordinate.</li>
-            <li><strong>Linked list:</strong> every step chained to the one before it.</li>
-          </ul>
-          <p>Same machine, three completely different ceilings. The only thing that changed was how much the pieces depend on each other.</p>
-        </div>
+        <p class="text-blue">
+          <span class="arrow">↳</span> <strong>So the three shapes line up like this:</strong>
+        </p>
+        <ul>
+          <li><strong class="text-green">Matrix math:</strong> fully independent, runs everywhere at once.</li>
+          <li><strong class="text-blue">Sorting:</strong> independent at first, then forced to coordinate.</li>
+          <li><strong class="text-red">Linked list:</strong> every step chained to the one before it.</li>
+        </ul>
+        <p>
+          Same machine, three completely different ceilings. And the only thing that changed was how much the pieces depend on each other.
+        </p>
 
         <!-- Section 2 -->
         <h2><span class="hl-pink">Cross-question: Is every algorithm parallelizable if you just try hard enough?</span></h2>
