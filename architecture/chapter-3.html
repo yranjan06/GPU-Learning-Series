@@ -28,10 +28,10 @@
     <div class="notebook-header">
       <div class="date-row">
         <span class="date-label">date</span>
-        <span class="date-value">15 / jun / 26</span>
+        <span class="date-value">17 / jun / 26</span>
       </div>
       <div class="days-row">
-        <span class="active">m</span><span>t</span><span>w</span><span>t</span><span>f</span><span>s</span><span>s</span>
+        <span>m</span><span>t</span><span class="active">w</span><span>t</span><span>f</span><span>s</span><span>s</span>
       </div>
     </div>
 
@@ -46,13 +46,104 @@
 
         <!-- Title -->
         <h1><span class="hl-yellow">What "parallelizable" actually means</span></h1>
-        
-
+        <span class="annotation">*worked out from first principles*</span>
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          Last two chapters, we broke down why a CPU can't have 10,000 cores, and why a GPU crushes matrix math. This is the missing piece underneath both: when does throwing more cores at a problem actually help? 
         </p>
+
+        <p>
+          Because the honest answer is: usually, it doesn't.
+        </p>
+        
+        <p>
+          Here's the belief almost everyone walks around with: <em>"I have 10,000 cores, so any job gets 10,000 times faster."</em> It's a comforting idea, and it's mostly wrong. More cores only help if the work can be cut into pieces that don't need each other. The second one piece needs another piece's answer first, all those extra cores go quiet.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> The enemy of parallelism has a name: <strong>dependency</strong>. If step B needs the output of step A before it can even start, there is nothing to parallelize. Step B simply has to wait. No chip, no budget, no number of cores fixes that. It's baked into the shape of the problem.
+        </p>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-blue">Three shapes of work</span></h2>
+
+        <p>
+          The right question is never "how many cores do I have?" It's: <strong>"Do the pieces of this work depend on each other?"</strong> 
+        </p>
+        
+        <p>
+          Let's look at the same hardware across three tasks that sit at completely different points on the dependency scale.
+        </p>
+
+        <h3>1. Matrix multiplication: perfectly parallel</h3>
+        <p>
+          Every cell of the output has its own formula and reads only the original inputs. The cell at row 1, column 1 does not care what the cell at row 5, column 2 is doing. There is no sharing of results, no order, and no waiting. 
+        </p>
+        <p>
+          A GPU looks at this, sees that everything is independent, shatters the task into millions of pieces, and hands each to its own tiny core. They all run at once. The cores never have to talk to each other. Zero communication. This is the dream case: and it's exactly why AI, which is mostly matrix math, lives on GPUs.
+        </p>
+
+        <h3>2. Sorting: half parallel, then a wall</h3>
+        <p>
+          Take merge sort. The start is genuinely parallel. You have 10,000 numbers, you split them into four chunks, you hand each chunk to its own core, and all four sort their piece at the same time. Great, free speedup.
+        </p>
+        <p>
+          But then comes the merge. To fuse those four sorted chunks into one final sorted list, the cores have to compare elements across the chunks. This means they have to look at each other's data and coordinate. That final merge cannot be done by everyone at once. Cores slow down, they wait, they take turns. Sorting starts as a sprint and ends in a traffic jam: partly parallel, partly serial, and the serial tail caps how fast it can ever go.
+        </p>
+
+        <h3>3. Linked-list traversal: strictly serial, no escape</h3>
+        <p>
+          A linked list is a treasure hunt. Each block holds its own data plus the address of the next block, and nothing else. You do not know where item 2 lives until you have read item 1. You cannot reach item 5 without walking through 1, 2, 3, and 4 first. There is no shortcut, and no way to guess ahead.
+        </p>
+        <p>
+          Here, you can own 10,000 cores and exactly one of them will ever do work. The other 9,999 sit there swatting flies, because not one of them knows where to go next until the one working core tells them. Some problems are serial in their soul, and no hardware on earth can parallelize them.
+        </p>
+
+        <div class="callout-box">
+          <p><strong>The three shapes lined up:</strong></p>
+          <ul>
+            <li><strong>Matrix math:</strong> fully independent, runs everywhere at once.</li>
+            <li><strong>Sorting:</strong> independent at first, then forced to coordinate.</li>
+            <li><strong>Linked list:</strong> every step chained to the one before it.</li>
+          </ul>
+          <p>Same machine, three completely different ceilings. The only thing that changed was how much the pieces depend on each other.</p>
+        </div>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-pink">Cross-question: Is every algorithm parallelizable if you just try hard enough?</span></h2>
+
+        <p>
+          No. It's worth seeing why some problems are permanently serial:
+        </p>
+
+        <ol>
+          <li><strong>Inherent serial nature:</strong> Take Fibonacci numbers (0, 1, 1, 2, 3, 5, 8). The rule is literally <code>F(n) = F(n-1) + F(n-2)</code>. You cannot compute 8 until you already have 3 and 5. The definition itself forces an order. No clever scheduling escapes a problem that is defined in terms of its own previous answers.</li>
+          
+          <li><strong>Data dependency:</strong> If every step's input is the previous step's output, the steps form a chain by construction. Step 2 cannot begin until step 1 has handed it something. Parallelism here isn't just slow: it's impossible.</li>
+          
+          <li><strong>The baby rule:</strong> This is the most honest line in all of computer science: <em>nine women cannot make a baby in one month.</em> Some things take linear time because of physical or logical limits, and dividing the work among more workers does nothing. Adding people to a late project, or cores to a serial task, just adds coordination confusion.</li>
+          
+          <li><strong>Communication can cost more than the work:</strong> This is the trap. If you force a stubborn serial algorithm onto thousands of cores anyway, the cores spend more time shouting at each other (asking <em>"did you finish? what's your answer? wait for me"</em>) than they would have spent just doing the math on one core. The coordination overhead grows faster than the speedup, and the whole thing gets slower than where you started. More cores actively made it worse.</li>
+        </ol>
+
+        <!-- Conclusion -->
+        <div class="callout-box red-ink">
+          <h2 class="text-red">The General Takeaway</h2>
+
+          <p>
+            Don't count cores: read the dependencies. 
+          </p>
+
+          <p>
+            If the pieces of the work are independent of each other, send it to a GPU and watch thousands of cores eat it alive, like matrix math. If each piece depends on the last, forget the core count entirely and put it on a single fast CPU core, like a linked list. 
+          </p>
+
+          <p class="text-red bold" style="font-family: 'Patrick Hand', cursive; font-size: 24px; text-align: center;">
+            The core count was never the answer. <br>
+            <span class="hl-yellow">The shape of the dependencies always was.</span>
+          </p>
+        </div>
 
       </div>
     </div>
