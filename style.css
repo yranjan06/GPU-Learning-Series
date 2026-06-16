@@ -402,6 +402,11 @@ ol li::before {
     padding: 6px 8px;
   }
 
+  .title-prefix {
+    display: none;
+  }
+
+
   .formula-text {
     font-size: 20px;
     line-height: var(--grid-size);
