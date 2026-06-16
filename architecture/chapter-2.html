@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Architecture - Chapter 2: Why a GPU multiplies matrices faster</title>
+  <title>The Architecture - Chapter 2: Why a GPU Multiplies Matrices Faster</title>
 
   <!-- Handwriting and casual fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +32,8 @@
         <span class="date-value">15 / jun / 26</span>
       </div>
       <div class="days-row">
-        <span class="active">m</span><span>t</span><span>w</span><span>t</span><span>f</span><span>s</span><span>s</span>
+        <span
+          class="active">m</span><span>t</span><span>w</span><span>t</span><span>f</span><span>s</span><span>s</span>
       </div>
     </div>
 
@@ -46,14 +47,140 @@
       <div class="notebook-grid-content">
 
         <!-- Title -->
-        <h1><span class="hl-yellow">Why a GPU multiplies matrices faster</span></h1>
-        
-
+        <h1><span class="hl-yellow">Why a GPU Multiplies Matrices Faster</span></h1>
+        <span class="annotation">*worked out from first principles*</span>
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          Last chapter, we broke down why a CPU can't have 10,000 cores. This is the other half — why a GPU can, and why it only wins at one very specific shape of work.
         </p>
+        
+        <p>
+          Here's the thing almost everyone repeats: <em>"A GPU is faster because it has more cores."</em> I believed it too for years. But it bugged me, because more of something slow doesn't automatically beat fewer of something fast. A bus has more seats than a Ferrari. That doesn't make it quicker to the airport.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> So the claim is incomplete. The real question isn't "does the GPU have more cores." It's <strong>"what kind of work lets thousands of weak cores beat a handful of strong ones?"</strong> And the answer isn't in the chip. It's in the math.
+        </p>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-blue">First, what matrix multiplication actually is.</span></h2>
+
+        <p>
+          It's rows times columns, multiply and add. Take one row from the first matrix, line it up against one column from the second, multiply them pair by pair, add the results. That single number is one cell of the answer grid.
+        </p>
+
+        <div class="callout-box">
+          <p class="bold" style="font-family: 'Space Mono', monospace; text-align: center;">
+            Answer[slot 1] = (A × X) + (B × Y) + (C × Z)
+          </p>
+        </div>
+
+        <p>
+          Now sit with the part that changes everything. Every cell of the answer is <strong class="hl-yellow">independent</strong>. For a 3x3 times a 3x3 you get 9 output cells, and not one of them needs another one to be done first. Cell 1 doesn't read Cell 5. Cell 9 doesn't wait on Cell 2.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> There is no order. They're 9 separate little math problems that happen to share input, and they could all be solved at the exact same instant without anyone noticing. That independence is the whole secret.
+        </p>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-pink">A CPU goes serial</span></h2>
+
+        <p>
+          A CPU has a few big, fast, expensive cores. So it does the only thing it can — it goes serial. Cell 1, then Cell 2, then Cell 3, one clock cycle after another.
+        </p>
+
+        <p>
+          For 9 cells that's nothing. But real AI is not 3x3. A single transformer layer inside a model like ChatGPT multiplies matrices around 10,000 × 10,000. That's <strong>100 million independent cells</strong> in one operation. A CPU marching through 100 million cells one at a time, however fast each step is, is going to drown.
+        </p>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-yellow">A GPU splits the work</span></h2>
+
+        <p>
+          A GPU looks at those same 100 million independent cells and asks the obvious question — <em>why are we standing in a line at all?</em>
+        </p>
+
+        <p>
+          So it hands each output cell to its own tiny core. One worker per slot. Millions of slots, millions of workers, all firing together. But to really get why a CPU can't just copy that trick, you have to go one level down...
+        </p>
+
+        <!-- Section 4 -->
+        <h2><span class="hl-blue">Inside the core: ALU vs. Control Unit</span></h2>
+
+        <p>
+          Most people blur the inside of a core into one thing, but it's really two main parts:
+        </p>
+
+        <ol>
+          <li><strong>The ALU (Arithmetic Logic Unit) is the worker.</strong> And here's the surprise — the worker is dumb. It's just a circuit of transistors. It cannot think. It has no memory of its own. It sits there and waits to be told what to do.</li>
+          <li><strong>The Control Unit is the manager.</strong> It reads the code and drives the ALU. It fetches the numbers, sends an electrical signal (like 001 for add, 010 for subtract), which flips the right transistors inside the ALU to drop the answer out.</li>
+        </ol>
+
+        <p>
+          Every "smart" thing a CPU does — guessing your next instruction (branch prediction), reshuffling work to stay busy (out-of-order execution) — all of it lives inside this Control Unit manager.
+        </p>
+
+        <div class="callout-box">
+          <p class="bold" style="font-family: 'Space Mono', monospace; text-align: center;">
+            Core = Manager (Control Unit) + Worker (ALU) + Pocket Memory (Registers)
+          </p>
+        </div>
+
+        <!-- Section 5 -->
+        <h2><span class="hl-pink">The exact fork: CPU vs. GPU</span></h2>
+
+        <p>
+          This is where a CPU and a GPU stop being the same chip.
+        </p>
+        
+        <p>
+          <strong class="hl-blue">A CPU core</strong> gives one big, smart manager to just a few workers. Every single core makes its own complicated independent decisions. That manager is enormous (billions of transistors), so only a few cores physically fit.
+        </p>
+
+        <p>
+          <strong class="hl-green">A GPU core</strong> does the exact opposite. It takes one manager and puts it in charge of <em>thousands</em> of workers. One manager shouts "001" a single time, and thousands of workers all add at the exact same instant. No worker thinks for itself. That's <strong>SIMT (Single Instruction, Multiple Threads)</strong>. One command, a whole army moving in lockstep.
+        </p>
+
+        <!-- Section 6 -->
+        <h2><span class="hl-yellow">Feeding the army</span></h2>
+
+        <p>
+          Thousands of cores are useless if data trickles in. Two things prevent the army from starving:
+        </p>
+
+        <ul>
+          <li><strong class="text-green">Bandwidth:</strong> A GPU skips ordinary RAM and uses wide memory like HBM. An NVIDIA A100 moves around 1.5 to 2 TB/s of memory. Think of it as a 10-lane highway built only to keep workers fed.</li>
+          <li><strong class="text-blue">Arithmetic Intensity:</strong> This is the deepest point. Matrix math pulls a number in once and reuses it across many rows and columns. So much math happens per byte that the cores are buried in computation. The memory delay hides behind the massive workload (on an A100, that's the gap between ~2 TB/s memory and 300+ TFLOPS of compute).</li>
+        </ul>
+
+        <!-- Section 7 -->
+        <h2><span class="hl-pink">Why not run your OS on it?</span></h2>
+
+        <p>
+          If the GPU is such a monster, why don't we run Windows or Linux on it? Because the moment work stops being independent, the entire model collapses.
+        </p>
+
+        <ul>
+          <li><strong>Sequential code:</strong> You can't pour the milk before the tea has boiled. On a sequential task, exactly 1 of the 10,000 cores does anything, and the other 9,999 sit swatting flies.</li>
+          <li><strong>Low arithmetic intensity:</strong> Normal apps mostly just move data around without heavy math. Cores spend time waiting on memory, and that beautiful bandwidth advantage disappears.</li>
+          <li><strong>Amdahl's Law:</strong> A program runs only as fast as its slowest sequential part. One stubborn serial section puts a ceiling on the entire chip.</li>
+        </ul>
+
+        <!-- Conclusion -->
+        <div class="callout-box red-ink">
+          <h2 class="text-red">The General Takeaway</h2>
+
+          <p>
+            Don't count cores — look at the shape of the work. Unpredictable, branchy, one-thing-depends-on-the-last work belongs on a CPU. Identical, independent, thousands-at-once grid work belongs on a GPU.
+          </p>
+
+          <p class="text-red bold" style="font-family: 'Patrick Hand', cursive; font-size: 24px; text-align: center;">
+            And the reason all of AI runs on GPUs instead of CPUs comes down to one quiet property of matrix math... <br>
+            <span class="hl-yellow">its pieces don't depend on each other.</span>
+          </p>
+        </div>
 
       </div>
     </div>
