@@ -81,7 +81,7 @@
         </p>
 
         <p class="text-blue">
-          <span class="arrow">↳</span> There is no order. They're 9 separate little math problems that happen to share input, and they could all be solved at the exact same instant without anyone noticing. That independence is the whole secret.
+          <span class="arrow">↳</span> There is no order. They're 9 separate little math problems that happen to share input, and they could all be solved at the exact same instant without anyone noticing. That independence is the whole secret. Now watch why the same work splits two completely different ways.
         </p>
 
         <!-- Section 2 -->
@@ -143,6 +143,10 @@
           <strong class="hl-green">A GPU core</strong> does the exact opposite. It takes one manager and puts it in charge of <em>thousands</em> of workers. One manager shouts "001" a single time, and thousands of workers all add at the exact same instant. No worker thinks for itself. That's <strong>SIMT (Single Instruction, Multiple Threads)</strong>. One command, a whole army moving in lockstep.
         </p>
 
+        <p class="text-blue">
+          <span class="arrow">↳</span> So the trade is clean. A CPU core is one genius working alone, fast and independent. A GPU replaces the genius with thousands of obedient workers who only know how to follow the same order together. On an A100 or H100, that's roughly 5,000 to 10,000 of these tiny cores on one chip.
+        </p>
+
         <!-- Section 6 -->
         <h2><span class="hl-yellow">Feeding the army</span></h2>
 
@@ -155,6 +159,17 @@
           <li><strong class="text-blue">Arithmetic Intensity:</strong> This is the deepest point. Matrix math pulls a number in once and reuses it across many rows and columns. So much math happens per byte that the cores are buried in computation. The memory delay hides behind the massive workload (on an A100, that's the gap between ~2 TB/s memory and 300+ TFLOPS of compute).</li>
         </ul>
 
+        <p>
+          Put all of it together and you can feel it in something you use every day. Every time you type into ChatGPT, billions of these matrix multiplications run behind your answer. On a CPU, line by line, that takes minutes and the chat hangs. On a GPU, split across thousands of cores, the same work comes back in milliseconds.
+        </p>
+
+        <div class="callout-box">
+          <p><strong>The full chain, bottom to top:</strong></p>
+          <p style="font-family: 'Space Mono', monospace; text-align: center;">
+            Independent math slots → one dumb ALU per slot, driven by one Control Unit → a wide HBM highway feeding them → one command driving the whole army at once.
+          </p>
+        </div>
+
         <!-- Section 7 -->
         <h2><span class="hl-pink">Why not run your OS on it?</span></h2>
 
@@ -166,6 +181,7 @@
           <li><strong>Sequential code:</strong> You can't pour the milk before the tea has boiled. On a sequential task, exactly 1 of the 10,000 cores does anything, and the other 9,999 sit swatting flies.</li>
           <li><strong>Low arithmetic intensity:</strong> Normal apps mostly just move data around without heavy math. Cores spend time waiting on memory, and that beautiful bandwidth advantage disappears.</li>
           <li><strong>Amdahl's Law:</strong> A program runs only as fast as its slowest sequential part. One stubborn serial section puts a ceiling on the entire chip.</li>
+          <li><strong>Slow single core:</strong> One GPU core, on its own, has a low clock speed. In a one-on-one fight on a sequential task, a single CPU core wins easily.</li>
         </ul>
 
         <!-- Conclusion -->
