@@ -303,6 +303,22 @@ ol li::before {
   margin-bottom: var(--grid-size);
 }
 
+/* Handwritten Utilities */
+.formula-text {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 26px;
+  text-align: center;
+  margin-bottom: var(--grid-size);
+  line-height: calc(var(--grid-size) * 2);
+}
+
+.handwritten-highlight {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 26px;
+  font-weight: bold;
+  line-height: var(--grid-size);
+}
+
 /* Sidebar Navigation */
 .nav-sidebar {
   position: absolute;
@@ -361,7 +377,7 @@ ol li::before {
 
 @media (max-width: 600px) {
   body {
-    padding: 20px 10px;
+    padding: 10px 5px;
   }
 
   .nav-sidebar {
@@ -377,6 +393,21 @@ ol li::before {
   }
 
   h1 {
-    font-size: 32px;
+    font-size: 28px;
+    line-height: var(--grid-size);
+  }
+
+  .notebook-title-row {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .formula-text {
+    font-size: 20px;
+    line-height: var(--grid-size);
+  }
+
+  .handwritten-highlight {
+    font-size: 20px;
   }
 }
