@@ -53,8 +53,181 @@
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          A GPU core can do math faster than almost anything humans have built. But it can only work on data that is physically close to it. The further data sits from the core, the longer the core waits. So chips solve this with a <strong class="hl-green">staircase of memory</strong>: fastest and smallest at the top, slowest and biggest at the bottom. Understanding that staircase is <strong class="hl-yellow">why some code flies and some code crawls</strong>.
         </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> Think of a bank cashier. <strong class="hl-blue">The cashier's hands and brain are the core</strong>, and the <strong class="hl-pink">cash is the data</strong>. Where that cash is kept, and how far the cashier has to walk to reach it, is the entire story.
+        </p>
+
+        <!-- Hand-drawn Staircase Diagram -->
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 600 300" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+            <defs>
+              <!-- Wobbly hand-drawn filter with userSpaceOnUse to prevent straight-line clipping -->
+              <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="300">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
+            
+            <!-- Shaded Highlight under the staircase steps for a sketched notebook feel -->
+            <!-- Step 1 (Registers) Highlight -->
+            <polygon points="120,60 200,60 200,110 120,110" fill="var(--hl-yellow)" opacity="0.35" filter="url(#handdrawn)" />
+            <!-- Step 2 (L1 / Shared) Highlight -->
+            <polygon points="200,110 280,110 280,160 200,160" fill="var(--hl-blue)" opacity="0.35" filter="url(#handdrawn)" />
+            <!-- Step 3 (L2 Cache) Highlight -->
+            <polygon points="280,160 360,160 360,210 280,210" fill="var(--hl-green)" opacity="0.35" filter="url(#handdrawn)" />
+            <!-- Step 4 (Global VRAM) Highlight -->
+            <polygon points="360,210 460,210 460,260 360,260" fill="var(--hl-pink)" opacity="0.35" filter="url(#handdrawn)" />
+
+            <!-- The Staircase Line (Double Sketched Path) -->
+            <!-- Layer 1 -->
+            <path d="M 120,60 L 200,60 L 200,110 L 280,110 L 280,160 L 360,160 L 360,210 L 460,210" fill="none" stroke="var(--ink-navy)" stroke-width="2.5" stroke-linecap="round" filter="url(#handdrawn)" />
+            <!-- Layer 2 (Slightly offset to look sketched) -->
+            <path d="M 121,59 L 199,59 L 199,109 L 279,109 L 279,159 L 359,159 L 359,209 L 459,209" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" opacity="0.6" stroke-linecap="round" filter="url(#handdrawn)" />
+
+            <!-- Staircase Step Labels -->
+            <!-- Step 1: Registers -->
+            <text x="160" y="45" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Registers</text>
+            <text x="160" y="56" fill="var(--ink-blue)" font-size="10" font-weight="bold" text-anchor="middle">(Bytes)</text>
+
+            <!-- Step 2: L1 & Shared Memory -->
+            <text x="240" y="95" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">L1 / Shared</text>
+            <text x="240" y="106" fill="var(--ink-blue)" font-size="10" font-weight="bold" text-anchor="middle">(Kilobytes)</text>
+
+            <!-- Step 3: L2 Cache -->
+            <text x="320" y="145" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">L2 Cache</text>
+            <text x="320" y="156" fill="var(--ink-blue)" font-size="10" font-weight="bold" text-anchor="middle">(Megabytes)</text>
+
+            <!-- Step 4: Global VRAM -->
+            <text x="410" y="195" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Global VRAM</text>
+            <text x="410" y="206" fill="var(--ink-blue)" font-size="10" font-weight="bold" text-anchor="middle">(Gigabytes)</text>
+
+            <!-- Left Arrow: Speed (Time to reach) -->
+            <path d="M 75,230 L 75,55" fill="none" stroke="var(--ink-red)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <!-- Custom Arrowhead pointing up -->
+            <path d="M 71,63 L 75,50 L 79,63 Z" fill="var(--ink-red)" filter="url(#handdrawn)" />
+            <text x="-140" y="60" transform="rotate(-90)" fill="var(--ink-red)" font-size="13" font-weight="bold" text-anchor="middle">Speed (Faster)</text>
+
+            <!-- Right Arrow: Capacity (Size) -->
+            <path d="M 505,40 L 505,215" fill="none" stroke="var(--ink-red)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <!-- Custom Arrowhead pointing down -->
+            <path d="M 501,207 L 505,220 L 509,207 Z" fill="var(--ink-red)" filter="url(#handdrawn)" />
+            <text x="-130" y="525" transform="rotate(-90)" fill="var(--ink-red)" font-size="13" font-weight="bold" text-anchor="middle">Capacity (Bigger)</text>
+
+            <!-- Cashier Metaphor Annotations with Sketch Arrows -->
+            <!-- Top: Cash in Hand -->
+            <text x="260" y="32" fill="var(--ink-navy)" font-size="12" font-style="italic">"cash in cashier's hand"</text>
+            <path d="M 255,28 Q 215,28 190,40" fill="none" stroke="var(--ink-red)" stroke-width="1" opacity="0.7" filter="url(#handdrawn)" />
+            <path d="M 194,36 L 186,42 L 196,44 Z" fill="var(--ink-red)" opacity="0.7" filter="url(#handdrawn)" />
+
+            <!-- Bottom: Main Vault -->
+            <text x="260" y="250" fill="var(--ink-navy)" font-size="12" font-style="italic">"the bank vault underground"</text>
+            <path d="M 380,246 Q 415,246 430,225" fill="none" stroke="var(--ink-red)" stroke-width="1" opacity="0.7" filter="url(#handdrawn)" />
+            <path d="M 424,228 L 434,220 L 432,230 Z" fill="var(--ink-red)" opacity="0.7" filter="url(#handdrawn)" />
+          </svg>
+          <span class="annotation" style="margin-top: 8px; display: block; font-size: 13px;">*slope = registers (bytes), flat roof = global vram (gigabytes)*</span>
+        </div>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-yellow">Registers: The Cash in Hand</span></h2>
+
+        <p>
+          At the very top of the staircase sit the <strong class="hl-yellow">registers</strong>. This is the cash literally in the cashier's hand right now, the note being counted out to the customer this exact second. It is the <span class="hl-blue">fastest memory that exists</span> on the chip, but it is tiny, holding only a few values at a time. 
+        </p>
+
+        <p>
+          When you write a normal variable in code, like setting x to 5, that value <span class="hl-yellow">lives in a register</span>. It is instant to reach, but there is almost no room.
+        </p>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-blue">L1 Cache: The Counter Drawer</span></h2>
+
+        <p>
+          Just below that is the <strong class="hl-blue">L1 cache</strong> (where the L stands for level). This is the cashier's own drawer right at the counter, the cash they reach for constantly. It is small, measured in kilobytes, but blindingly fast and sitting right inside the core. 
+        </p>
+
+        <p>
+          Data the core keeps touching again and again gets held here so it never has to walk away to fetch it. Picture small items you need every minute kept in your shirt pocket. That is L1.
+        </p>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-pink">Shared Memory: The Counter Tray</span></h2>
+
+        <p>
+          Alongside L1 there is also <strong class="hl-pink">shared memory</strong>, which sits at the same closeness but plays a different role. It is a <span class="hl-yellow">small tray on the counter</span> that the cashier and the cashiers beside them can all dip into. It is how cores sitting near each other swap numbers quickly without going far. 
+        </p>
+
+        <p>
+          In heavy math like matrix multiplication, hundreds of cores running together use this shared tray to hand each other values fast. Without it, that work would crawl.
+        </p>
+
+        <!-- Section 4 -->
+        <h2><span class="hl-green">L2 Cache: The Manager's Safe</span></h2>
+
+        <p>
+          Go one step down and you reach the <strong class="hl-green">L2 cache</strong>. This is bigger, measured in megabytes, but it sits outside the individual core and is <span class="hl-blue">shared by all the cores</span> on the chip. 
+        </p>
+
+        <p>
+          Because everyone has to come to this one place, it is a little slower to reach than your own drawer. Picture the bigger items that do not fit in your pocket going into a desk drawer you still reach from your chair. In the bank, this is like one larger safe in the manager's cabin that every cashier walks to when their own drawer runs dry.
+        </p>
+
+        <!-- Section 5 -->
+        <h2><span class="hl-blue">Global Memory: The Underground Vault</span></h2>
+
+        <p>
+          At the very bottom is <strong class="hl-blue">global memory</strong>, the VRAM. This is the <span class="hl-pink">bank's main vault underground</span>, holding everything. It is enormous, holding the entire dataset, but reaching it is slow. 
+        </p>
+
+        <p>
+          The cashier has to get up, walk down, clear security, and wait. This long walk down to the vault is the <strong class="hl-yellow">memory wall from the ground up</strong>. All the data is here, but pulling from here makes the core wait the longest.
+        </p>
+
+        <div style="margin-bottom: var(--grid-size); text-align: center;">
+          <p class="hl-yellow" style="font-family: 'Space Mono', monospace; font-size: 15px; display: inline-block; padding: 0 10px; margin-top: 0; margin-bottom: 0; line-height: var(--grid-size); height: var(--grid-size); border-radius: 4px; letter-spacing: normal;">
+            Registers (Bytes) → L1 & Shared (KBs) → L2 (MBs) → Global VRAM (GBs)
+          </p>
+        </div>
+
+        <!-- Takeaway -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+
+          <p>
+            Now here is what fast code actually means: a <span class="hl-pink">foolish cashier runs down to the vault for every customer</span>, and the line stretches out the door. A <span class="hl-green">smart cashier walks down once... stuffs it into the drawer</span> and the counter tray, and serves everyone instantly from arm's reach. 
+          </p>
+
+          <p>
+            Fast code is exactly that: <strong class="hl-yellow">keep the heavy data you touch repeatedly up near the core</strong>, in registers and cache, and walk down to global memory as rarely as you possibly can.
+          </p>
+
+          <p>
+            This is not theory, it is where <span class="hl-blue">real performance comes from</span>:
+          </p>
+
+          <ul>
+            <li>When you ask an AI model a question, its full set of weights sits down in global memory because nothing else is big enough, but the few recent lines of your conversation get cycled through the fast caches.</li>
+            <li>In a modern game, textures are parked in global memory while the lighting on the pixels stays in cache, and the exact angle of a moving object gets computed right there in registers.</li>
+            <li>In video editing, a chunk of footage is lifted up into cache so scrubbing and color grading stay smooth instead of stuttering against the slow vault.</li>
+          </ul>
+
+          <p>
+            And a programmer steers this on purpose. In CUDA, marking something as shared tells the chip to place that data in the fast shared tray so nearby cores can hammer it together. A plain variable drops straight into a register.
+          </p>
+
+          <p>
+            The entire craft of writing fast GPU code comes down to one obsession: <strong class="hl-green">dragging the data that gets reused out of the slow vault</strong> and pinning it near the core before the work starts.
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            The core was never the slow part... <br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;"><strong class="hl-red bold">the distance to the data is</strong>. Arrange your data so the workers rarely walk.</span>
+          </p>
+        </div>
 
       </div>
     </div>
