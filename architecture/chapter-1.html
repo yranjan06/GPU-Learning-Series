@@ -129,12 +129,12 @@
             Chrome, then a background app updates. The instructions change constantly. So the core has to be "smart",
             and being smart costs a ton of physical silicon.</li>
 
-          <li>Most of that silicon is actually spent guessing instead of doing math. <strong>Branch prediction</strong>
-            tries to guess your next instruction before it even runs. <strong>Out-of-order execution</strong> scrambles
+          <li>Most of that silicon is actually spent guessing instead of doing math. <strong class="hl-yellow">Branch prediction</strong>
+            tries to guess your next instruction before it even runs. <strong class="hl-pink">Out-of-order execution</strong> scrambles
             instructions on the fly to keep the core busy. These are massive guessing engines that take up physical
             space to keep the math units fed.</li>
 
-          <li>Then you have <strong>cache</strong>. Standard RAM is way too slow to feed a fast core. So CPUs put huge
+          <li>Then you have <strong class="hl-blue">cache</strong>. Standard RAM is way too slow to feed a fast core. So CPUs put huge
             memory pools directly on the chip like L1, L2, and L3 cache. On a real CPU die, cache can take up more than
             half the total chip area! The actual math units just sit in a tiny corner.</li>
         </ol>
@@ -146,7 +146,7 @@
 
         <p>
           A GPU core, on the other hand, is just a tiny, dumb math unit. No huge cache. No guessing hardware. If you
-          strip away all that "smart" stuff, <strong>a core shrinks by a factor of 100</strong>. That is exactly how you
+          strip away all that "smart" stuff, <strong class="hl-green">a core shrinks by a factor of 100</strong>. That is exactly how you
           fit thousands of them.
         </p>
 
@@ -183,60 +183,36 @@
             
             <!-- GPU Blocks -->
             <!-- Control Block (Yellow Highlight) -->
-            <path d="M 350,45 L 530,45 L 530,65 L 350,65 Z" fill="var(--hl-yellow)" opacity="0.35" filter="url(#handdrawn)" />
-            <path d="M 350,45 L 530,45 L 530,65 L 350,65 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+            <path d="M 350,45 L 530,45 L 530,70 L 350,70 Z" fill="var(--hl-yellow)" opacity="0.35" filter="url(#handdrawn)" />
+            <path d="M 350,45 L 530,45 L 530,70 L 350,70 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
             
             <!-- Cache Block (Blue Highlight) -->
-            <path d="M 350,70 L 530,70 L 530,85 L 350,85 Z" fill="var(--hl-blue)" opacity="0.35" filter="url(#handdrawn)" />
-            <path d="M 350,70 L 530,70 L 530,85 L 350,85 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
+            <path d="M 350,78 L 530,78 L 530,95 L 350,95 Z" fill="var(--hl-blue)" opacity="0.35" filter="url(#handdrawn)" />
+            <path d="M 350,78 L 530,78 L 530,95 L 350,95 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
             
-            <!-- ALU Grid (32 tiny boxes) -->
-            <rect x="350" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="372" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="394" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="416" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="438" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="460" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="482" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="504" y="95" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
+            <!-- ALU Block (Pink Highlight) -->
+            <path d="M 350,105 L 530,105 L 530,185 L 350,185 Z" fill="var(--hl-pink)" opacity="0.35" filter="url(#handdrawn)" />
+            <path d="M 350,105 L 530,105 L 530,185 L 350,185 Z" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-linecap="round" filter="url(#handdrawn)" />
             
-            <rect x="350" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="372" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="394" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="416" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="438" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="460" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="482" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="504" y="120" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            
-            <rect x="350" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="372" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="394" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="416" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="438" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="460" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="482" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="504" y="145" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            
-            <rect x="350" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="372" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="394" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="416" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="438" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="460" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="482" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <rect x="504" y="170" width="18" height="18" fill="var(--hl-pink)" opacity="0.35" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#handdrawn)" />
+            <!-- ALU Grid Lines (Internal, clean lines without filter for legibility) -->
+            <line x1="386" y1="105" x2="386" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+            <line x1="422" y1="105" x2="422" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+            <line x1="458" y1="105" x2="458" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+            <line x1="494" y1="105" x2="494" y2="185" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+            <line x1="350" y1="125" x2="530" y2="125" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+            <line x1="350" y1="145" x2="530" y2="145" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
+            <line x1="350" y1="165" x2="530" y2="165" stroke="var(--ink-navy)" stroke-width="0.8" opacity="0.5" />
             
             <!-- Text Labels (crisp, no filter) -->
             <text x="160" y="25" fill="var(--ink-navy)" font-size="16" font-weight="bold" text-anchor="middle">CPU CORE</text>
-            <text x="160" y="78" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Control (Manager)</text>
-            <text x="160" y="146" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Cache (Local Memory)</text>
-            <text x="160" y="196" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">ALU (Worker)</text>
+            <text x="160" y="80" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Control (Manager)</text>
+            <text x="160" y="148" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Cache (Local Memory)</text>
+            <text x="160" y="198" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">ALU (Worker)</text>
             
             <text x="440" y="25" fill="var(--ink-navy)" font-size="16" font-weight="bold" text-anchor="middle">GPU CORE BLOCK (SM)</text>
-            <text x="440" y="58" fill="var(--ink-black)" font-size="12" font-weight="bold" text-anchor="middle">Control</text>
-            <text x="440" y="81" fill="var(--ink-black)" font-size="11" font-weight="bold" text-anchor="middle">Cache</text>
-            <text x="440" y="202" fill="var(--ink-black)" font-size="13" font-weight="bold" text-anchor="middle">ALUs (Hundreds of dumb workers)</text>
+            <text x="440" y="62" fill="var(--ink-black)" font-size="12" font-weight="bold" text-anchor="middle">Control</text>
+            <text x="440" y="91" fill="var(--ink-black)" font-size="11" font-weight="bold" text-anchor="middle">Cache</text>
+            <text x="440" y="205" fill="var(--ink-black)" font-size="13" font-weight="bold" text-anchor="middle">ALUs (Hundreds of tiny workers)</text>
           </svg>
           <span class="annotation" style="margin-top: 8px; display: block; font-size: 13px;">*cpu: huge manager and cache for one fast worker. gpu: small manager for thousands of dumb workers.*</span>
         </div>
@@ -247,8 +223,8 @@
         <p>The core concept underneath all of this architecture is Latency vs Throughput.</p>
 
         <ul>
-          <li><strong>Latency (CPU)</strong> = time to finish one task from start to finish.</li>
-          <li><strong class="text-green">Throughput (GPU)</strong> = total work done over a window of time.</li>
+          <li><strong class="hl-yellow">Latency (CPU)</strong> = time to finish one task from start to finish.</li>
+          <li><strong class="hl-green">Throughput (GPU)</strong> = total work done over a window of time.</li>
         </ul>
 
         <p>
@@ -264,14 +240,14 @@
           exactly the type of workload a GPU is terrible at.</p>
 
         <ul>
-          <li><strong>Endless branching:</strong> An OS is constantly making if/else decisions based on whatever the
+          <li><strong class="hl-pink">Endless branching:</strong> An OS is constantly making if/else decisions based on whatever the
             user decides to click.</li>
-          <li><strong>Lockstep requirement:</strong> GPUs demand all their thousands of cores do the exact same step at
+          <li><strong class="hl-blue">Lockstep requirement:</strong> GPUs demand all their thousands of cores do the exact same step at
             the exact same instant.</li>
-          <li><strong>Thread divergence:</strong> If those cores hit different branches in the code, they experience
+          <li><strong class="hl-yellow">Thread divergence:</strong> If those cores hit different branches in the code, they experience
             divergence. They can't run together anymore and have to take turns. All that amazing parallel speed
             collapses into a slow serial crawl.</li>
-          <li><strong>Hardware interrupts:</strong> An OS has to react instantly to random hardware events like a mouse
+          <li><strong class="hl-green">Hardware interrupts:</strong> An OS has to react instantly to random hardware events like a mouse
             movement. CPUs handle those seamlessly. GPUs hate stopping their huge workflows for sudden interruptions.
           </li>
         </ul>

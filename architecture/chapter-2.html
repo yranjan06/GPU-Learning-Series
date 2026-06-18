@@ -56,11 +56,11 @@
         </p>
         
         <p>
-          Here's the thing almost everyone repeats: <em>"A GPU is faster because it has more cores."</em> I believed it too for years. But it bugged me, because more of something slow doesn't automatically beat fewer of something fast. A bus has more wheels than a Ferrari. That doesn't make it quicker to the airport.
+          Here's the thing almost everyone repeats: <strong class="hl-pink"><em>"A GPU is faster because it has more cores."</em></strong> I believed it too for years. But it bugged me, because more of something slow doesn't automatically beat fewer of something fast. A bus has more wheels than a Ferrari. That doesn't make it quicker to the airport.
         </p>
 
         <p class="text-blue">
-          <span class="arrow">↳</span> So the claim is incomplete. The real question isn't "does the GPU have more cores." It's <strong>"what kind of work lets thousands of weak cores beat a handful of strong ones?"</strong> And the answer isn't in the chip. It's in the math.
+          <span class="arrow">↳</span> So the claim is incomplete. The real question isn't "does the GPU have more cores." It's <strong class="hl-green">"what kind of work lets thousands of weak cores beat a handful of strong ones?"</strong> And the answer isn't in the chip. It's in the math.
         </p>
 
         <!-- Section 1 -->
@@ -144,26 +144,26 @@
             
             <!-- Labels (crisp, no filter) -->
             <text x="102.5" y="125" fill="var(--ink-navy)" font-size="13" font-weight="bold" text-anchor="middle">Matrix A</text>
-            <text x="15" y="156" fill="var(--ink-blue)" font-size="13" font-weight="bold" text-anchor="middle">Row i</text>
+            <text x="15" y="157" fill="var(--ink-blue)" font-size="13" font-weight="bold" text-anchor="middle">Row i</text>
             <path d="M 34,152.5 L 45,152.5" fill="none" stroke="var(--ink-blue)" stroke-width="1.2" filter="url(#handdrawn)" />
             <path d="M 40,149.5 L 47,152.5 L 40,155.5 Z" fill="var(--ink-blue)" filter="url(#handdrawn)" />
             
-            <text x="252.5" y="12" fill="var(--ink-navy)" font-size="13" font-weight="bold" text-anchor="middle">Matrix B</text>
-            <text x="155" y="72" fill="var(--ink-red)" font-size="13" font-weight="bold" text-anchor="middle">Col j</text>
-            <path d="M 174,68 L 194,68" fill="none" stroke="var(--ink-red)" stroke-width="1.2" filter="url(#handdrawn)" />
-            <path d="M 189,65 L 196,68 L 189,71 Z" fill="var(--ink-red)" filter="url(#handdrawn)" />
+            <text x="252.5" y="-5" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Matrix B</text>
+            <text x="217.5" y="10" fill="var(--ink-red)" font-size="13" font-weight="bold" text-anchor="middle">Col j</text>
+            <path d="M 217.5,14 L 217.5,19" fill="none" stroke="var(--ink-red)" stroke-width="1.2" filter="url(#handdrawn)" />
+            <path d="M 214.5,17 L 217.5,20 L 220.5,17 Z" fill="var(--ink-red)" filter="url(#handdrawn)" />
             
             <text x="252.5" y="253" fill="var(--ink-navy)" font-size="13" font-weight="bold" text-anchor="middle">Result Matrix C</text>
             <text x="217.5" y="157" fill="var(--ink-green)" font-size="13" font-weight="bold" text-anchor="middle">C[i,j]</text>
             
             <!-- Panel Texts -->
-            <text x="462.5" y="60" fill="var(--ink-navy)" font-size="15" font-weight="bold" text-anchor="middle">Parallel Thread Mapping</text>
-            <text x="365" y="90" fill="var(--ink-black)" font-size="13">• GPU Core #1 ➔ computes C[0,0] (Yellow)</text>
-            <text x="365" y="112" fill="var(--ink-black)" font-size="13">• GPU Core #2 ➔ computes C[0,1]</text>
-            <text x="365" y="134" fill="var(--ink-black)" font-size="13">• GPU Core #3 ➔ computes C[0,2]</text>
-            <text x="365" y="156" fill="var(--ink-black)" font-size="13">• GPU Core #9 ➔ computes C[2,2]</text>
+            <text x="462.5" y="60" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Parallel Thread Mapping</text>
+            <text x="355" y="88" fill="var(--ink-black)" font-size="12">• Core #1 ➔ computes C[0,0] (Yellow)</text>
+            <text x="355" y="108" fill="var(--ink-black)" font-size="12">• Core #2 ➔ computes C[0,1]</text>
+            <text x="355" y="128" fill="var(--ink-black)" font-size="12">• Core #3 ➔ computes C[0,2]</text>
+            <text x="355" y="148" fill="var(--ink-black)" font-size="12">• Core #9 ➔ computes C[2,2]</text>
             
-            <text x="462.5" y="195" fill="var(--ink-green)" font-size="14" font-weight="bold" text-anchor="middle">No core waits on another!</text>
+            <text x="462.5" y="185" fill="var(--ink-green)" font-size="13" font-weight="bold" text-anchor="middle">No core waits on another!</text>
           </svg>
           <span class="annotation" style="margin-top: 8px; display: block; font-size: 13px;">*each output cell C[i,j] is computed independently from Row i and Col j by its own thread, with zero cross-dependencies.*</span>
         </div>
@@ -176,7 +176,7 @@
         </p>
 
         <p>
-          For 9 cells that's nothing. But real AI is not 3x3. A single transformer layer inside a model like ChatGPT multiplies matrices around 10,000 × 10,000. That's <strong>100 million independent cells</strong> in one operation. A CPU marching through 100 million cells one at a time, however fast each step is, is going to drown.
+          For 9 cells that's nothing. But real AI is not 3x3. A single transformer layer inside a model like ChatGPT multiplies matrices around 10,000 × 10,000. That's <strong class="hl-yellow">100 million independent cells</strong> in one operation. A CPU marching through 100 million cells one at a time, however fast each step is, is going to drown.
         </p>
 
         <!-- Section 3 -->
@@ -198,8 +198,8 @@
         </p>
 
         <ol>
-          <li><strong>The ALU (Arithmetic Logic Unit) is the worker.</strong> And here's the surprise: the worker is dumb. It's just a circuit of transistors. It cannot think. It has no memory of its own. It sits there and waits to be told what to do.</li>
-          <li><strong>The Control Unit is the manager.</strong> It reads the code and drives the ALU. It fetches the numbers, sends an electrical signal (like 001 for add, 010 for subtract), which flips the right transistors inside the ALU to drop the answer out.</li>
+          <li><strong class="hl-pink">The ALU (Arithmetic Logic Unit) is the worker.</strong> And here's the surprise: the worker is dumb. It's just a circuit of transistors. It cannot think. It has no memory of its own. It sits there and waits to be told what to do.</li>
+          <li><strong class="hl-blue">The Control Unit is the manager.</strong> It reads the code and drives the ALU. It fetches the numbers, sends an electrical signal (like 001 for add, 010 for subtract), which flips the right transistors inside the ALU to drop the answer out.</li>
         </ol>
 
         <p>
@@ -222,7 +222,7 @@
         </p>
 
         <p>
-          <strong class="hl-green">A GPU core</strong> does the exact opposite. It takes one manager and puts it in charge of <em>thousands</em> of workers. One manager shouts "001" a single time, and thousands of workers all add at the exact same instant. No worker thinks for itself. That's <strong>SIMT (Single Instruction, Multiple Threads)</strong>. One command, a whole army moving in lockstep.
+          <strong class="hl-green">A GPU core</strong> does the exact opposite. It takes one manager and puts it in charge of <em>thousands</em> of workers. One manager shouts "001" a single time, and thousands of workers all add at the exact same instant. No worker thinks for itself. That's <strong class="hl-yellow">SIMT (Single Instruction, Multiple Threads)</strong>. One command, a whole army moving in lockstep.
         </p>
 
         <p class="text-blue">
@@ -237,8 +237,8 @@
         </p>
 
         <ul>
-          <li><strong class="text-green">Bandwidth:</strong> A GPU skips ordinary RAM and uses wide memory like HBM. An NVIDIA A100 moves around 1.5 to 2 TB/s of memory. Think of it as a 10-lane highway built only to keep workers fed.</li>
-          <li><strong class="text-blue">Arithmetic Intensity:</strong> This is the deepest point. Matrix math pulls a number in once and reuses it across many rows and columns. So much math happens per byte that the cores are buried in computation. The memory delay hides behind the massive workload (on an A100, that's the gap between ~2 TB/s memory and 300+ TFLOPS of compute).</li>
+          <li><strong class="hl-green">Bandwidth:</strong> A GPU skips ordinary RAM and uses wide memory like HBM. An NVIDIA A100 moves around 1.5 to 2 TB/s of memory. Think of it as a 10-lane highway built only to keep workers fed.</li>
+          <li><strong class="hl-blue">Arithmetic Intensity:</strong> This is the deepest point. Matrix math pulls a number in once and reuses it across many rows and columns. So much math happens per byte that the cores are buried in computation. The memory delay hides behind the massive workload (on an A100, that's the gap between ~2 TB/s memory and 300+ TFLOPS of compute).</li>
         </ul>
 
         <p>

@@ -74,7 +74,7 @@
         <h2><span class="hl-blue">SIMT: One conductor, 32 players</span></h2>
 
         <p>
-          Now the rule every warp runs on: <strong>one order, everyone obeys.</strong>
+          Now the rule every warp runs on: <strong class="hl-pink">one order, everyone obeys.</strong>
         </p>
 
         <p>
@@ -197,8 +197,8 @@
         </p>
 
         <ul>
-          <li>A <strong class="text-blue">fetcher and decoder</strong> that figures out the next instruction and translates it into something the worker understands (like a supervisor reading the menu and telling the cooks whether to roll or to fry).</li>
-          <li>A <strong class="text-red">dependency tracker</strong> that makes sure a worker does not start before the data it needs is ready (like a checker making sure nobody starts rolling a dough ball that has not been made yet).</li>
+          <li>A <strong class="hl-blue">fetcher and decoder</strong> that figures out the next instruction and translates it into something the worker understands (like a supervisor reading the menu and telling the cooks whether to roll or to fry).</li>
+          <li>A <strong class="hl-pink">dependency tracker</strong> that makes sure a worker does not start before the data it needs is ready (like a checker making sure nobody starts rolling a dough ball that has not been made yet).</li>
         </ul>
 
         <p>
@@ -206,9 +206,9 @@
         </p>
 
         <ol>
-          <li><strong class="text-red">The control tax:</strong> Put a separate supervisor and a separate checker on top of every cook, and a kitchen of 3200 cooks now also has 3200 supervisors and 3200 checkers. The cost and the paperwork of managing that crowd becomes impossible. The scheduler simply melts under its own bookkeeping.</li>
-          <li><strong class="text-red">The math space runs out:</strong> A chip is a fixed size. If most of that space gets eaten by supervisors and checkers, there is no room left for the workers and their stations. And the workers are the whole point. Fewer workers means less math gets done, so the chip you built to be fast ends up slow. This is exactly why a GPU spends most of its silicon on workers and very little on managers.</li>
-          <li><strong class="text-red">The complexity bomb:</strong> If 3200 supervisors are all shouting different orders at once, the wiring needed to carry all those separate instructions across the chip becomes a tangle that physics will not allow you to build on silicon. One instruction shared by 32 is a clean wire. Thousands of independent instructions is chaos.</li>
+          <li><strong class="hl-yellow">The control tax:</strong> Put a separate supervisor and a separate checker on top of every cook, and a kitchen of 3200 cooks now also has 3200 supervisors and 3200 checkers. The cost and the paperwork of managing that crowd becomes impossible. The scheduler simply melts under its own bookkeeping.</li>
+          <li><strong class="hl-pink">The math space runs out:</strong> A chip is a fixed size. If most of that space gets eaten by supervisors and checkers, there is no room left for the workers and their stations. And the workers are the whole point. Fewer workers means less math gets done, so the chip you built to be fast ends up slow. This is exactly why a GPU spends most of its silicon on workers and very little on managers.</li>
+          <li><strong class="hl-green">The complexity bomb:</strong> If 3200 supervisors are all shouting different orders at once, the wiring needed to carry all those separate instructions across the chip becomes a tangle that physics will not allow you to build on silicon. One instruction shared by 32 is a clean wire. Thousands of independent instructions is chaos.</li>
         </ol>
 
         <p>
@@ -227,9 +227,9 @@
         </p>
 
         <ul>
-          <li><strong>Computers think in powers of two:</strong> Everything at the hardware level runs on the binary ladder: 2, 4, 8, 16, 32, 64. Routing data and doing math is simplest when the group size sits on that ladder. Pick an odd size like 30 or 35 and the hardware wastes effort wrestling it into a shape it can handle.</li>
-          <li><strong>32 is a balance point:</strong> Go too small (like teams of 4) and you need far more teams, which means more supervisors, bringing the control tax right back. Go too big (like teams of 256) and forcing that many workers to do the exact same step becomes fragile, because the moment some of them need to go a different way, the rest have to stop and wait. So 32 sits in the sweet spot where management stays cheap and the group stays nimble enough to actually move together.</li>
-          <li><strong>It lines up with data wires:</strong> The paths that carry data into the cores are built on the same binary design, so when the hardware fires one pulse it can comfortably feed a full 32 threads at once, each getting its own lane with no traffic jam.</li>
+          <li><strong class="hl-yellow">Computers think in powers of two:</strong> Everything at the hardware level runs on the binary ladder: 2, 4, 8, 16, 32, 64. Routing data and doing math is simplest when the group size sits on that ladder. Pick an odd size like 30 or 35 and the hardware wastes effort wrestling it into a shape it can handle.</li>
+          <li><strong class="hl-pink">32 is a balance point:</strong> Go too small (like teams of 4) and you need far more teams, which means more supervisors, bringing the control tax right back. Go too big (like teams of 256) and forcing that many workers to do the exact same step becomes fragile, because the moment some of them need to go a different way, the rest have to stop and wait. So 32 sits in the sweet spot where management stays cheap and the group stays nimble enough to actually move together.</li>
+          <li><strong class="hl-blue">It lines up with data wires:</strong> The paths that carry data into the cores are built on the same binary design, so when the hardware fires one pulse it can comfortably feed a full 32 threads at once, each getting its own lane with no traffic jam.</li>
         </ul>
 
         <!-- Conclusion -->
