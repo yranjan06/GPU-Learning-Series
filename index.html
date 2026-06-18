@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Bundled Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ranjan Yadav — Portfolio</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #faf9f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -117,6 +118,52 @@ document.addEventListener('DOMContentLoaded', async function() {
     const resourceScript = '<script>window.__resources = ' +
       JSON.stringify(resourceMap).split('</' + 'script>').join('<\\/' + 'script>') +
       ';</' + 'script>';
+
+    // Responsive CSS to fix mobile layout — injected into the template's <head>
+    const responsiveCSS = '<style>' +
+      '@media (max-width: 768px) {' +
+        /* shrink hero heading */
+        'h1[style*="font-size:68px"] { font-size: 38px !important; line-height: 1.15 !important; }' +
+        /* shrink hero subtitle */
+        'p[style*="font-size:30px"] { font-size: 20px !important; }' +
+        /* shrink availability line */
+        'p[style*="font-size:20px"][style*="dc2626"] { font-size: 15px !important; }' +
+        /* stack About + Now grid into single column */
+        'div[style*="grid-template-columns:1.4fr 1fr"] { grid-template-columns: 1fr !important; }' +
+        /* stack skills rows (label + chips) into single column */
+        'div[style*="grid-template-columns:120px 1fr"] { grid-template-columns: 1fr !important; }' +
+        /* reduce main content padding */
+        'div[style*="padding:40px 36px 56px 36px"] { padding: 20px 16px 36px 16px !important; }' +
+        /* reduce outer page padding */
+        'div[style*="padding:40px 20px 80px 20px"] { padding: 20px 12px 40px 12px !important; }' +
+        /* section headings */
+        'h2[style*="font-size:34px"] { font-size: 26px !important; }' +
+        'h2[style*="font-size:26px"] { font-size: 22px !important; }' +
+        /* project / series cards: single column */
+        'div[style*="grid-template-columns:repeat(auto-fill, minmax(258px, 1fr))"] { grid-template-columns: 1fr !important; }' +
+        /* card headings */
+        'h3[style*="font-size:26px"] { font-size: 22px !important; }' +
+        /* contact chip row: allow wrapping naturally */
+        'div[style*="display:flex"][style*="flex-wrap:wrap"][style*="gap:10px"] { gap: 8px !important; }' +
+        /* chip font size */
+        'a[style*="border-radius:20px"][style*="font-size:13px"] { font-size: 12px !important; padding: 5px 10px !important; }' +
+        /* title row padding */
+        'div[style*="border-bottom:1px solid #2b3a55"][style*="padding:8px 16px"] { padding: 6px 12px !important; font-size: 13px !important; }' +
+        /* footer */
+        'div[style*="border-top:1px dashed"] { flex-direction: column !important; text-align: center !important; }' +
+        /* remove card rotation on mobile for cleaner feel */
+        'a[style*="transform:rotate"] { transform: rotate(0deg) !important; }' +
+      '}' +
+      '@media (max-width: 480px) {' +
+        'h1[style*="font-size:68px"] { font-size: 30px !important; }' +
+        'p[style*="font-size:30px"] { font-size: 17px !important; }' +
+        'div[style*="padding:40px 36px 56px 36px"] { padding: 16px 12px 28px 12px !important; }' +
+        'div[style*="padding:40px 20px 80px 20px"] { padding: 12px 8px 28px 8px !important; }' +
+        /* skills chips smaller */
+        'span[style*="border-radius:14px"][style*="font-size:14px"] { font-size: 12px !important; padding: 2px 8px !important; }' +
+      '}' +
+    '</' + 'style>';
+
     // Inject after <head> so the DOCTYPE stays first; prepending the script
     // would push the parser into quirks mode. DOMParser always emits a <head>
     // (synthesizing one if the source HTML omitted it) but may carry
@@ -125,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const headOpen = template.match(/<head[^>]*>/i);
     if (headOpen) {
       const i = headOpen.index + headOpen[0].length;
-      template = template.slice(0, i) + resourceScript + template.slice(i);
+      template = template.slice(0, i) + resourceScript + responsiveCSS + template.slice(i);
     }
 
     // Parse the template and swap the root element. Scripts inserted via
