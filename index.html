@@ -129,9 +129,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         /* shrink availability line */
         'p[style*="font-size:20px"][style*="dc2626"] { font-size: 15px !important; }' +
         /* stack About + Now grid into single column */
-        'div[style*="grid-template-columns:1.4fr 1fr"] { grid-template-columns: 1fr !important; }' +
+        'div[style*="grid-template-columns:1.4fr"] { display: flex !important; flex-direction: column !important; gap: 20px !important; }' +
         /* stack skills rows (label + chips) into single column */
-        'div[style*="grid-template-columns:120px 1fr"] { grid-template-columns: 1fr !important; }' +
+        'div[style*="grid-template-columns:120px"] { display: flex !important; flex-direction: column !important; gap: 10px !important; }' +
         /* reduce main content padding */
         'div[style*="padding:40px 36px 56px 36px"] { padding: 20px 16px 36px 16px !important; }' +
         /* reduce outer page padding */
