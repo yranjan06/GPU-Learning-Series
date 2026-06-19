@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Putting it Together - Chapter 11: Why GPUs suit deep learning</title>
+  <title>Putting it Together - Chapter 11: why ai runs on gpus but databases dont</title>
 
   <!-- Handwriting and casual fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
   <div class="notebook-wrapper">
 
     <!-- Sidebar Navigation -->
-    <a href="../inside-the-silicon/chapter-10.html" class="nav-sidebar nav-prev">← Chapter 10: Occupancy</a>
+    <a href="../inside-the-silicon/chapter-10.html" class="nav-sidebar nav-prev">← Chapter 10: Why occupancy matters</a>
     <a href="chapter-12.html" class="nav-sidebar nav-next">Chapter 12: Latency hiding →</a>
 
     <!-- Notebook Header (Date and Days) -->
@@ -48,13 +48,155 @@
       <div class="notebook-grid-content">
 
         <!-- Title -->
-        <h1><span class="hl-yellow">Why GPUs suit deep learning</span></h1>
+        <h1><span class="hl-yellow">why ai runs on gpus but databases dont</span></h1>
         <span class="annotation">*worked out from first principles*</span>
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          A GPU can chew through billions of numbers a second. So a fair question is why we don't just run everything on it. Why is Google's search, a bank's ledger, Amazon's inventory, all of it, still crawling along on CPUs. 
         </p>
+
+        <p class="text-blue">
+          The answer says a lot about what a GPU actually is, because the same machine that is perfect for AI is <strong class="hl-pink">genuinely terrible for a database</strong>. And the reason isn't power. It's the shape of the work.
+        </p>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-green">What AI Actually Is Underneath</span></h2>
+
+        <p>
+          Start with what AI actually is underneath, because it isn't what most people picture.
+        </p>
+
+        <p class="text-blue">
+          An AI model is not a giant pile of if/else logic. Strip it down and it's just math, enormous amounts of one kind of math. When you hand a model a photo of a cat, it doesn't see a cat. It sees a big grid of numbers, the pixel values. The model carries its own grid of numbers it learned during training, called <strong class="hl-yellow">weights</strong>. And the entire act of thinking is just multiplying the input grid against the weight grid, over and over, layer after layer. 
+        </p>
+        
+        <p class="text-blue">
+          Data flows in one end and gets multiplied forward through the network. That's the whole engine.
+        </p>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-blue">Why AI and GPUs are a Perfect Match</span></h2>
+
+        <p>
+          Now hold that next to how a GPU is built, and you'll see why they're made for each other. Three reasons.
+        </p>
+
+        <ul>
+          <li><strong>First, the work is pure <span class="hl-green">matrix multiplication</span></strong>, and a GPU is physically a grid of thousands of tiny cores. Multiplying two large grids breaks into millions of tiny multiplications that don't depend on each other, and a GPU has exactly the army to do them all at once. The math and the machine have the same shape.</li>
+          <li><strong>Second, modern GPUs carry special hardware built just for this, called <strong class="hl-blue">Tensor Cores</strong>.</strong> A normal core multiplies one pair of numbers at a time. A tensor core swallows a whole small grid and multiplies it in basically one shot, and it's hardwired for the compact number formats AI uses. It's a chunk of silicon that exists for no reason other than to do this one operation faster.</li>
+          <li><strong>Third, and this is the quiet one, <span class="hl-yellow">AI has no surprises in its path</span>.</strong> The data marches forward through the network and the corrections flow backward, and there's no point where the work suddenly asks a question and forks. So all 32 threads in a group stay locked in step doing the same multiply. No branching, no team splitting, <strong class="hl-green">none of the stalling</strong> that kills GPU performance. It's an army on a parade march, every step identical.</li>
+        </ul>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-pink">Why Databases Hit a Wall</span></h2>
+
+        <p>
+          Now flip to a database, and every one of those advantages turns into a wall.
+        </p>
+
+        <ol>
+          <li>
+            <strong>Low Arithmetic Intensity:</strong> The math is trivial but the data is huge. A database mostly looks things up and adds things. <span class="text-blue">Find this name. Total this column. Add 100 to this balance.</span> The actual computation is nothing, but it has to drag mountains of data across the chip to do it. So a GPU core finishes its tiny bit of math instantly and then sits there <strong class="hl-pink">starving</strong>, waiting on data that trickles in over the wires. This is the <span class="hl-yellow">low arithmetic intensity</span> problem, and it's poison for a GPU.
+          </li>
+          <li>
+            <strong>Branching and Divergence:</strong> A database is nothing but branching. Every real query is full of conditions. "Show me black t-shirts under 500 rupees" means checking, for every single row, is it a t-shirt, is it black, is it under 500. Each row takes a different decision. And a group of GPU threads forced down different decision paths is exactly the <strong class="hl-red bold">divergence disaster</strong>. Half the threads freeze while the other half run, then they swap. A query packed with WHERE and JOIN conditions makes the GPU's threads constantly split and stall against each other.
+          </li>
+          <li>
+            <strong>Random Access:</strong> The data is scattered. AI data arrives in neat ordered rows the GPU can stream. Database data lives anywhere in memory, fetched in a random, jumping pattern. A GPU wants its data lined up and predictable, and random access turns the supply road into a jam.
+          </li>
+          <li>
+            <strong>ACID Locking:</strong> This is the deepest one. Databases demand order. There's a rule called ACID, and the core of it is that transactions must happen safely, one at a time when they touch the same thing. Picture you and your brother both trying to withdraw 500 rupees from the same account with 500 in it, at the same moment from two ATMs. If both go through, the bank just lost money. So the database <strong class="hl-yellow">locks the account</strong>, lets one withdrawal finish completely, and only then lets the next one in. Now imagine handing that careful, step-by-step processing to a GPU swarm that pounces on data all at once. Who enforces the lock? You want one strict manager handling each transaction in order, safely, with low delay. That is exactly what a CPU is.
+          </li>
+        </ol>
+
+        <!-- Hand-drawn SVG Diagram -->
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 600 280" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+            <defs>
+              <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="280">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
+            
+            <!-- Left Side: AI The Synchronized March -->
+            <rect x="20" y="20" width="260" height="230" fill="var(--hl-green)" opacity="0.15" stroke="var(--ink-navy)" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#handdrawn)" rx="10"/>
+            <text x="150" y="45" fill="var(--ink-navy)" font-size="18" font-weight="bold" text-anchor="middle">AI</text>
+            <text x="150" y="65" fill="var(--ink-black)" font-size="14" font-style="italic" text-anchor="middle">"The Disciplined March"</text>
+
+            <!-- Threads marching straight -->
+            <g filter="url(#handdrawn)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <!-- Row 1 -->
+              <circle cx="60" cy="110" r="5" fill="var(--ink-navy)" />
+              <path d="M 70,110 L 220,110" stroke-dasharray="4,4" />
+              <polygon points="220,105 230,110 220,115" fill="var(--ink-navy)" stroke="none" />
+              <!-- Row 2 -->
+              <circle cx="60" cy="140" r="5" fill="var(--ink-navy)" />
+              <path d="M 70,140 L 220,140" stroke-dasharray="4,4" />
+              <polygon points="220,135 230,140 220,145" fill="var(--ink-navy)" stroke="none" />
+              <!-- Row 3 -->
+              <circle cx="60" cy="170" r="5" fill="var(--ink-navy)" />
+              <path d="M 70,170 L 220,170" stroke-dasharray="4,4" />
+              <polygon points="220,165 230,170 220,175" fill="var(--ink-navy)" stroke="none" />
+              <!-- Row 4 -->
+              <circle cx="60" cy="200" r="5" fill="var(--ink-navy)" />
+              <path d="M 70,200 L 220,200" stroke-dasharray="4,4" />
+              <polygon points="220,195 230,200 220,205" fill="var(--ink-navy)" stroke="none" />
+            </g>
+            <text x="150" y="235" fill="var(--ink-black)" font-size="13" text-anchor="middle">Zero divergence. Perfect sync.</text>
+
+            <!-- Right Side: Database The Chaotic Market -->
+            <rect x="320" y="20" width="260" height="230" fill="var(--hl-pink)" opacity="0.15" stroke="var(--ink-red)" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#handdrawn)" rx="10"/>
+            <text x="450" y="45" fill="var(--ink-red)" font-size="18" font-weight="bold" text-anchor="middle">Databases</text>
+            <text x="450" y="65" fill="var(--ink-black)" font-size="14" font-style="italic" text-anchor="middle">"The Chaotic Market"</text>
+
+            <!-- Threads going everywhere, locks, forks -->
+            <g filter="url(#handdrawn)" stroke="var(--ink-red)" stroke-width="2" fill="none">
+              <!-- Thread 1 hitting a lock -->
+              <circle cx="360" cy="110" r="5" fill="var(--ink-red)" stroke="none"/>
+              <path d="M 370,110 L 460,110" />
+              <rect x="465" y="95" width="30" height="30" fill="none" stroke="var(--ink-navy)" stroke-width="2" />
+              <text x="480" y="115" fill="var(--ink-navy)" font-size="12" stroke="none" text-anchor="middle">LOCK</text>
+              <polygon points="460,105 465,110 460,115" fill="var(--ink-red)" stroke="none" />
+              <!-- Thread 2 blocked by lock -->
+              <circle cx="360" cy="140" r="5" fill="var(--ink-red)" stroke="none"/>
+              <path d="M 370,140 Q 430,140 450,125" stroke-dasharray="2,2" />
+              <line x1="450" y1="120" x2="455" y2="130" stroke="var(--ink-navy)" stroke-width="2"/>
+              <!-- Thread 3 branching -->
+              <circle cx="360" cy="180" r="5" fill="var(--ink-red)" stroke="none"/>
+              <path d="M 370,180 L 420,180" />
+              <text x="420" y="175" fill="var(--ink-black)" font-size="12" stroke="none" text-anchor="middle">WHERE?</text>
+              <path d="M 430,180 Q 450,160 480,160" />
+              <path d="M 430,180 Q 450,200 480,200" stroke-dasharray="4,4" />
+              <polygon points="480,155 485,160 480,165" fill="var(--ink-red)" stroke="none" />
+              <!-- Thread 4 random access -->
+              <circle cx="360" cy="210" r="5" fill="var(--ink-red)" stroke="none"/>
+              <path d="M 370,210 Q 400,230 450,220 T 520,180" />
+              <polygon points="515,185 520,180 515,175" fill="var(--ink-red)" stroke="none" />
+            </g>
+            <text x="450" y="235" fill="var(--ink-black)" font-size="13" text-anchor="middle">Divergence. Stalls. Serial Locks.</text>
+          </svg>
+        </div>
+
+        <!-- Conclusion -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+          <p>
+            So the whole thing reduces to one contrast. AI is a <strong class="hl-green">synchronized march</strong>. Every worker takes the same step at the same time down a fixed path, which is the precise situation where a swarm of thousands wins. 
+          </p>
+
+          <p>
+            A database is a <strong class="hl-pink">chaotic market</strong>. Every request goes to a different stall, asks a different question, needs a different answer, and demands to be served in a careful order. That is the precise situation where you want one sharp manager, not a crowd. 
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            The GPU didn't lose at databases because it's weak...<br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">it lost because a database is the one shape of work a swarm cannot do.</span>
+          </p>
+        </div>
 
       </div>
     </div>

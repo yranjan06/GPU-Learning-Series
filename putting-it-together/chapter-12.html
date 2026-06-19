@@ -22,8 +22,8 @@
   <div class="notebook-wrapper">
 
     <!-- Sidebar Navigation -->
-    <a href="chapter-11.html" class="nav-sidebar nav-prev">← Chapter 11: Deep learning</a>
-    <a href="chapter-13.html" class="nav-sidebar nav-next">Chapter 13: CPU-style caches? →</a>
+    <a href="chapter-11.html" class="nav-sidebar nav-prev">← Chapter 11: AI vs Databases</a>
+    <a href="chapter-13.html" class="nav-sidebar nav-next">Chapter 13: Caches? →</a>
 
     <!-- Notebook Header (Date and Days) -->
     <div class="notebook-header">
@@ -53,8 +53,202 @@
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          Here's the strangest fact about a GPU. Its individual cores are not smart and they are not fast. Each one is a <strong class="hl-green">dumb little worker</strong> with a slow clock, far weaker than a single CPU core. And yet the GPU as a whole runs circles around the CPU on the right work. 
         </p>
+        
+        <p>
+          It's like watching someone with no magic skills pull off the biggest magic trick in the room. The secret has a name, <strong class="hl-yellow">latency hiding</strong>, and once you see it you understand why a GPU is built the way it is.
+        </p>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-pink">The Delay Problem: Data takes time</span></h2>
+
+        <p class="text-blue">
+          Start with the problem everyone underestimates. <span class="hl-pink">Data takes time to travel.</span> 
+        </p>
+
+        <p>
+          Even on a small chip with expensive wide memory, when a core asks for a number from main memory, that number has to physically make its way across to the core, and that takes a while. Hundreds of clock cycles, sometimes. This delay is latency, and no amount of fancy memory fully erases it. The wire has a length and the trip takes time. So every core, GPU or CPU, constantly faces moments where it has asked for data and simply cannot proceed until it arrives.
+        </p>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-blue">Two Philosophies: Erasing vs. Embracing</span></h2>
+
+        <p class="text-blue">
+          Now the two designs answer this in completely opposite ways, and that's the whole story.
+        </p>
+
+        <p class="text-blue">
+          A CPU hates the wait. Its entire philosophy is, do not let the core sit idle, not for a microsecond. So it spends enormous resources making the wait disappear. Big caches keep data parked right next to the core so it rarely has to reach far. A branch predictor guesses what data will be needed next and fetches it early. Out-of-order execution lets it grab whatever work is ready and do that first instead of stalling. All of this is the CPU trying to <strong class="hl-blue">erase the delay entirely</strong> so its one precious core never stops.
+        </p>
+
+        <p>
+          A GPU does the opposite. It doesn't try to erase the wait. It <strong class="hl-yellow">embraces it</strong>. The GPU shrugs and says, fine, the data will take a while, so I'll just go do something else in the meantime. It doesn't guess, it doesn't predict, it doesn't build big caches. <strong class="hl-pink">It switches.</strong>
+        </p>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-green">The Dhaba Analogy</span></h2>
+
+        <p>
+          Picture a dhaba where rotis take five minutes in the tandoor. That five minutes is the latency.
+        </p>
+
+        <p>
+          A <strong>CPU-style dhaba</strong> with one VIP table would have the customer sitting there fuming while the table stays empty for five minutes, so the CPU works frantically to pre-bake rotis so the wait never happens. 
+        </p>
+        
+        <p>
+          But a <strong>GPU-style dhaba</strong> has ten tables. Table one orders, and the roti will take five minutes. So the manager tells table one to wait, and instantly turns to table two whose order is ready and gets them going. Then table three. Then four. By the time he's worked through the other tables, table one's roti is done, and he swaps right back to them. 
+        </p>
+
+        <p class="text-blue">
+          <span class="hl-green">The kitchen, the part that actually cooks, never stops for a single second.</span> It just keeps changing which table it's serving.
+        </p>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 600 280" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+            <defs>
+              <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="280">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
+            
+            <!-- Left Side: CPU Dhaba -->
+            <rect x="10" y="10" width="280" height="240" fill="var(--hl-blue)" opacity="0.1" stroke="var(--ink-navy)" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#handdrawn)" rx="10"/>
+            <text x="150" y="35" fill="var(--ink-navy)" font-size="18" font-weight="bold" text-anchor="middle">CPU Dhaba</text>
+            <text x="150" y="55" fill="var(--ink-black)" font-size="13" font-style="italic" text-anchor="middle">(1 VIP Table)</text>
+
+            <!-- Tandoor (ALU) -->
+            <path d="M 50,110 Q 75,70 100,110 Z" fill="var(--hl-yellow)" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)"/>
+            <text x="75" y="125" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Tandoor</text>
+            <text x="75" y="140" fill="var(--ink-black)" font-size="11" text-anchor="middle">(Math Unit)</text>
+
+            <!-- VIP Table -->
+            <rect x="170" y="90" width="100" height="60" fill="var(--hl-blue)" opacity="0.3" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)" />
+            <text x="220" y="115" fill="var(--ink-black)" font-size="16" font-weight="bold" text-anchor="middle">VIP Table</text>
+            <text x="220" y="135" fill="var(--ink-red)" font-size="14" font-weight="bold" text-anchor="middle">Waiting (Angry)</text>
+            
+            <!-- Fuming customer indicator -->
+            <path d="M 220,70 Q 230,50 240,70" fill="none" stroke="var(--ink-red)" stroke-width="2" filter="url(#handdrawn)"/>
+            <path d="M 235,75 Q 245,55 255,75" fill="none" stroke="var(--ink-red)" stroke-width="2" filter="url(#handdrawn)"/>
+
+            <!-- Delay connection -->
+            <path d="M 110,105 L 160,105" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="4,4" filter="url(#handdrawn)"/>
+            <text x="135" y="95" fill="var(--ink-red)" font-size="12" text-anchor="middle">5m Wait</text>
+
+            <text x="150" y="180" fill="var(--ink-red)" font-size="14" font-weight="bold" text-anchor="middle">Kitchen is IDLE.</text>
+            <text x="150" y="200" fill="var(--ink-black)" font-size="13" text-anchor="middle">Has to pre-bake everything</text>
+            <text x="150" y="220" fill="var(--ink-black)" font-size="13" text-anchor="middle">to avoid the wait.</text>
+
+            <!-- Right Side: GPU Dhaba -->
+            <rect x="310" y="10" width="280" height="240" fill="var(--hl-yellow)" opacity="0.1" stroke="var(--ink-navy)" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#handdrawn)" rx="10"/>
+            <text x="450" y="35" fill="var(--ink-navy)" font-size="18" font-weight="bold" text-anchor="middle">GPU Dhaba</text>
+            <text x="450" y="55" fill="var(--ink-black)" font-size="13" font-style="italic" text-anchor="middle">(10 Normal Tables)</text>
+
+            <!-- Tandoor (ALU) -->
+            <path d="M 330,110 Q 355,70 380,110 Z" fill="var(--hl-yellow)" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)"/>
+            <text x="355" y="125" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Tandoor</text>
+            <text x="355" y="140" fill="var(--ink-black)" font-size="11" text-anchor="middle">(Math Unit)</text>
+
+            <!-- Tables -->
+            <!-- T1 -->
+            <rect x="420" y="70" width="60" height="40" fill="var(--hl-pink)" opacity="0.4" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <text x="450" y="85" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Table 1</text>
+            <text x="450" y="100" fill="var(--ink-red)" font-size="12" text-anchor="middle">Waiting 5m</text>
+            
+            <!-- Delay line from Kitchen to T1 -->
+            <path d="M 385,90 L 415,90" fill="none" stroke="var(--ink-red)" stroke-width="1.5" stroke-dasharray="3,3" filter="url(#handdrawn)"/>
+
+            <!-- T2 -->
+            <rect x="420" y="130" width="60" height="40" fill="var(--hl-green)" opacity="0.6" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)" />
+            <text x="450" y="145" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Table 2</text>
+            <text x="450" y="160" fill="var(--ink-navy)" font-size="12" font-weight="bold" text-anchor="middle">Eating!</text>
+
+            <!-- Serving line from Kitchen to T2 -->
+            <path d="M 385,130 L 410,145" fill="none" stroke="var(--ink-green)" stroke-width="2" filter="url(#handdrawn)"/>
+            <polygon points="405,140 415,148 405,150" fill="var(--ink-green)" stroke="none" />
+
+            <!-- T3 -->
+            <rect x="500" y="70" width="60" height="40" fill="var(--hl-blue)" opacity="0.3" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <text x="530" y="85" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Table 3</text>
+            <text x="530" y="100" fill="var(--ink-black)" font-size="12" font-style="italic" text-anchor="middle">Ready next</text>
+
+            <!-- T4 -->
+            <rect x="500" y="130" width="60" height="40" fill="var(--hl-yellow)" opacity="0.4" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <text x="530" y="145" fill="var(--ink-black)" font-size="14" font-weight="bold" text-anchor="middle">Table 4</text>
+            <text x="530" y="160" fill="var(--ink-black)" font-size="12" font-style="italic" text-anchor="middle">Ordering...</text>
+
+            <text x="450" y="195" fill="var(--ink-green)" font-size="14" font-weight="bold" text-anchor="middle">Kitchen NEVER stops.</text>
+            <text x="450" y="215" fill="var(--ink-black)" font-size="13" text-anchor="middle">Switches to T2 while T1 waits,</text>
+            <text x="450" y="230" fill="var(--ink-black)" font-size="13" text-anchor="middle">hiding the delay entirely.</text>
+
+            <!-- Switching Arc -->
+            <path d="M 430,115 Q 410,125 430,128" fill="none" stroke="var(--ink-navy)" stroke-width="1.5" stroke-dasharray="3,3" filter="url(#handdrawn)"/>
+            <polygon points="425,123 430,128 425,133" fill="var(--ink-navy)" stroke="none" />
+          </svg>
+        </div>
+
+        <p class="text-blue">
+          That's <strong class="hl-yellow">latency hiding</strong> exactly. The delay did not get smaller. Table one still waited its full five minutes. But because there were always other tables with ready work to switch to, the cook stayed busy the entire time. 
+        </p>
+
+        <p>
+          On a GPU, when one warp asks for data and has to wait hundreds of cycles, the scheduler puts it to sleep and instantly wakes another warp that has work ready. By the time it cycles back, the first warp's data has arrived. This swapping is so fast it costs almost nothing, and the math units, the only part that matters, never go idle. The GPU hid the delay behind other work instead of erasing it.
+        </p>
+
+        <!-- Section 4 -->
+        <h2><span class="hl-blue">Why not thousands of smart cores?</span></h2>
+
+        <p>
+          This also answers a question that should be nagging you. If a single smart CPU core is so good at avoiding delay, why doesn't a GPU just use thousands of those smart cores? Wouldn't that be the best of both worlds?
+        </p>
+
+        <p>
+          It would be a disaster, because of what makes a core smart in the first place. All that cleverness—the big caches, the guessing engines, the complex routing—takes up enormous space on the chip, and none of it does any actual math. <strong class="hl-pink">It's all management.</strong> 
+        </p>
+        
+        <p>
+          If you filled a GPU with thousands of those bloated smart cores, the <strong class="hl-blue">smart managers</strong> would eat nearly all the silicon and leave almost no room for the workers that do the multiplication. So the GPU does the ruthless thing. It throws the smart managers out, fills the freed space with thousands of cheap <strong class="hl-green">dumb math units</strong>, and recovers the lost cleverness through the <strong class="hl-yellow">switching trick</strong> instead. It doesn't need predictors when it can just hide the wait behind more warps.
+        </p>
+
+        <p>
+          And you can't escape this by just making one core faster either, because physics puts a ceiling on that. Push a single core's clock past a point and it generates so much heat and draws so much power that it would cook itself. So instead of betting everything on one genius core racing against a thermal wall, the GPU builds a factory of ten thousand basic workers. For work like AI and graphics, which is millions of simple identical multiplications, you don't need one brilliant mind making hard decisions. You need a <strong class="hl-green">huge crowd of ordinary hands</strong> lifting together. At that scale the crowd wins, every time.
+        </p>
+
+        <!-- Section 5 -->
+        <h2><span class="hl-pink">The Catch: The Memory Pipe</span></h2>
+
+        <p>
+          There's one catch worth naming, because the whole trick depends on it. 
+        </p>
+
+        <p>
+          Latency hiding only works if there's always fresh work to switch to. And fresh work means fresh data arriving. If the pipe feeding the chip is too narrow, the new data never shows up, every warp ends up waiting on the same starved supply, and there is nothing left to switch to. 
+        </p>
+
+        <p>
+          When that happens, all the tables fall asleep at once and the magic collapses into idle cores starving. So the switching trick and a <strong class="hl-pink">wide memory pipe</strong> are partners. One hides the wait, the other guarantees there's always something to wait with.
+        </p>
+
+        <!-- Conclusion -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+          <p>
+            So the takeaway is almost philosophical. The CPU fights delay by trying to never wait. The GPU accepts delay and stays busy through everything else it could be doing instead. 
+          </p>
+
+          <p>
+            The CPU bets on one genius who refuses to be idle. The GPU bets on a crowd so large that someone is always ready to work. 
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            And for the kind of massive, repetitive math that AI is made of...<br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">the crowd that embraces the wait beats the genius that fears it.</span>
+          </p>
+        </div>
 
       </div>
     </div>
