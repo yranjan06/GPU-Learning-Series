@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Putting it Together - Chapter 15: Designing an LLM processor</title>
+  <title>Putting it Together - Chapter 15: Designing an LLM training processor</title>
 
   <!-- Handwriting and casual fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,8 @@
   <div class="notebook-wrapper">
 
     <!-- Sidebar Navigation -->
-    <a href="chapter-14.html" class="nav-sidebar nav-prev">← Chapter 14: Memory wall & HBM</a>
+    <a href="chapter-14.html" class="nav-sidebar nav-prev">← Chapter 14: The memory wall & HBM</a>
+    <a href="../the-translation-barrier/chapter-16.html" class="nav-sidebar nav-next">Chapter 16: Phase 2 →</a>
 
     <!-- Notebook Header (Date and Days) -->
     <div class="notebook-header">
@@ -47,13 +48,204 @@
       <div class="notebook-grid-content">
 
         <!-- Title -->
-        <h1><span class="hl-yellow">Designing an LLM processor</span></h1>
-        <span class="annotation">*worked out from first principles*</span>
+        <h1><span class="hl-yellow">Designing an LLM training processor</span></h1>
+        <span class="annotation">*the final capstone blueprint*</span>
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          Here's the interview question that separates people who memorized facts from people who actually understand hardware. Design a chip to train a model like ChatGPT. 
         </p>
+        
+        <p class="text-blue">
+          If your answer is just add more cores, you fail on the spot. Because the deepest truth about training an AI model is this: <strong class="hl-pink">the math is cheap. Moving the data around is what costs everything.</strong> Once you believe that, the entire design follows, and it pulls together every idea about how these chips work into one blueprint. Let's build it from scratch.
+        </p>
+
+        <p>
+          The chip rests on five decisions. Each one is a choice about what to put on the silicon and, just as importantly, what to throw off it. Remember the chip is a fixed size, so every choice is a trade: you only get to add something by removing something else.
+        </p>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-green">The Foundation: Stripping the Cleverness</span></h2>
+
+        <p>
+          First, the compute. What do the workers look like?
+        </p>
+
+        <p class="text-blue">
+          Training is heavy, repetitive, predictable math, the same <span class="hl-yellow">matrix multiplications</span> over and over. So you do not want clever CPU-style cores with their big caches and guessing machinery. You rip all of that out. You fill almost the whole chip with simple, hardwired units built for one job, multiplying grids of numbers as fast as possible. Cheap workers in huge numbers, not a few expensive geniuses.
+        </p>
+
+        <p>
+          Now a sharp objection. If you strip out the big caches, doesn't the data have to come from far-off memory every time, starving those workers? 
+        </p>
+
+        <p>
+          And the answer is the quiet reason this works. In training, once a chunk of data arrives at the cores, they reuse it an enormous number of times before needing anything new. The data comes in once and gets ground on for ages. A browser or a database jumps around memory randomly and genuinely needs a big cache, but this workload doesn't. So the cache would mostly sit wasted, and that silicon is far better spent on more math units.
+        </p>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-blue">The Feed: Flooding the Workers</span></h2>
+
+        <p>
+          Second, feeding those workers. With the whole chip now packed with hungry math units, ordinary memory would leave them starving, idle most of the time waiting on data that trickles in. 
+        </p>
+
+        <p class="text-blue">
+          So you bring the memory physically onto the package, stack it into a tower right beside the compute, and connect it with <span class="hl-pink">thousands of microscopic vertical wires</span> instead of a few long ones on a board. The supply road becomes absurdly wide, and the data arrives as a flood instead of a trickle. The workers feast instead of starve. This is the single most important decision, because without it everything else is pointless.
+        </p>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-yellow">The Management: Operating in Lockstep</span></h2>
+
+        <p>
+          Third, managing all those workers. You have thousands of them, and if each one needed its own manager, the management hardware would eat the chip and melt under its own bookkeeping. 
+        </p>
+
+        <p class="text-blue">
+          So you bundle the workers into fixed groups and put one small <strong class="hl-blue">shared manager</strong> over each group. The whole group takes one instruction and executes it together in lockstep. 
+        </p>
+
+        <p>
+          And the beautiful part is that AI training fits this perfectly, because there's no branching in it. Even the part where the model corrects its own mistakes, the backward pass, is not a maze of if/else decisions. It's just matrix multiplication run in reverse, more of the same predictable math. So the workers never split off down different paths, the groups stay locked together, and that tiny shared manager is all you ever need.
+        </p>
+
+        <!-- Section 4 -->
+        <h2><span class="hl-pink">The Delays: Zero-Cost Switching</span></h2>
+
+        <p>
+          Fourth, the delays. Even with that flood of memory, data still takes time to arrive, and the workers will sometimes have to wait. You do not solve this by making the workers smart enough to predict, that would cost the silicon you just saved. 
+        </p>
+
+        <p class="text-blue">
+          Instead you keep a huge pile of ready work loaded up, and the moment one group stalls waiting on data, the scheduler instantly switches to another group that has work ready. By the time it cycles back, the first group's data has landed. The math units never sit idle, they just keep changing which group they're serving.
+        </p>
+
+        <p>
+          And there's a subtle trick that makes this switching free. On a CPU, swapping tasks means saving the old task's state out to memory and loading the new one, which costs real time. This chip avoids that entirely. It keeps the state of every waiting group already sitting in fast <strong class="hl-green">on-chip registers</strong>, all the time. So when one group stalls, nothing has to be saved or loaded. The scheduler just flips a switch to the next group's registers, and the swap happens with essentially zero delay. That is what lets the switching be aggressive enough to hide the waiting completely.
+        </p>
+
+        <!-- Section 5 -->
+        <h2><span class="hl-green">The Scale: Bypassing the Bottleneck</span></h2>
+
+        <p>
+          Fifth, and this is the one people forget: scale. A real model is far too big to fit on a single chip. It has to be split across thousands of them. 
+        </p>
+
+        <p class="text-blue">
+          And the instant your chips have to talk to each other over the slow standard slots a normal computer uses, the whole system chokes, your expensive chips sit idle waiting to pass data back and forth. It's like joining two bullet trains with a bullock-cart track between them. 
+        </p>
+
+        <p>
+          So you build dedicated <strong class="hl-blue">high-speed links</strong> directly between the chips that bypass the slow general-purpose routes entirely, fast enough that thousands of chips behave like one single giant brain rather than a crowd shouting across a room. For a model this size, this communication is the ultimate bottleneck, and getting it wrong wastes everything else you built.
+        </p>
+
+        <!-- SVG Diagram: The Blueprint -->
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 480" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+            <defs>
+              <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="480">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
+
+            <!-- Base Blueprint Canvas -->
+            <rect x="10" y="10" width="680" height="460" fill="var(--gray-light)" opacity="0.3" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)" rx="10"/>
+            <text x="350" y="40" fill="var(--ink-navy)" font-size="22" font-weight="bold" text-anchor="middle">Blueprint of an LLM Chip</text>
+            <path d="M 50,55 L 650,55" stroke="var(--ink-navy)" stroke-width="1.5" stroke-dasharray="4,4" filter="url(#handdrawn)" />
+
+            <!-- Core Logic Die -->
+            <rect x="180" y="80" width="340" height="300" fill="var(--hl-green)" opacity="0.1" stroke="var(--ink-green)" stroke-width="2" filter="url(#handdrawn)" rx="5"/>
+
+            <!-- 1. The Compute (Massive grid of workers) -->
+            <!-- Render a grid of tiny rects inside the compute area -->
+            <g opacity="0.6">
+              <!-- Row 1 -->
+              <rect x="220" y="110" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="245" y="110" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="270" y="110" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="295" y="110" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="320" y="110" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="345" y="110" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <!-- Row 2 -->
+              <rect x="220" y="135" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="245" y="135" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="270" y="135" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="295" y="135" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="320" y="135" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              <rect x="345" y="135" width="20" height="20" fill="var(--hl-green)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+              
+              <!-- More grid dots -->
+              <circle cx="230" cy="170" r="2" fill="var(--ink-navy)" />
+              <circle cx="230" cy="180" r="2" fill="var(--ink-navy)" />
+              <circle cx="230" cy="190" r="2" fill="var(--ink-navy)" />
+            </g>
+            <text x="350" y="180" fill="var(--ink-green)" font-size="16" font-weight="bold" text-anchor="middle">1. Massive Math Grid</text>
+            <text x="350" y="195" fill="var(--ink-black)" font-size="12" text-anchor="middle">(No Caches)</text>
+
+            <!-- 2. The Feed (HBM Stack) on the edges -->
+            <!-- Left HBM Stack -->
+            <rect x="60" y="120" width="80" height="150" fill="var(--hl-yellow)" opacity="0.4" stroke="var(--ink-yellow)" stroke-width="2" filter="url(#handdrawn)" rx="3"/>
+            <!-- Stack layers -->
+            <path d="M 60,150 L 140,150 M 60,180 L 140,180 M 60,210 L 140,210 M 60,240 L 140,240" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+            <text x="100" y="110" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">2. HBM Stack</text>
+            
+            <!-- Right HBM Stack -->
+            <rect x="560" y="120" width="80" height="150" fill="var(--hl-yellow)" opacity="0.4" stroke="var(--ink-yellow)" stroke-width="2" filter="url(#handdrawn)" rx="3"/>
+            <path d="M 560,150 L 640,150 M 560,180 L 640,180 M 560,210 L 640,210 M 560,240 L 640,240" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+            <text x="600" y="110" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">2. HBM Stack</text>
+
+            <!-- Wide data bus arrows from HBM to Core -->
+            <path d="M 150,195 L 170,195" stroke="var(--ink-blue)" stroke-width="6" marker-end="url(#arrow)" filter="url(#handdrawn)" />
+            <path d="M 550,195 L 530,195" stroke="var(--ink-blue)" stroke-width="6" marker-end="url(#arrow)" filter="url(#handdrawn)" />
+            <defs>
+              <marker id="arrow" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="var(--ink-blue)" />
+              </marker>
+            </defs>
+
+            <!-- 3. The Management (Shared Managers) -->
+            <rect x="220" y="240" width="100" height="30" fill="var(--hl-blue)" opacity="0.5" stroke="var(--ink-blue)" stroke-width="2" filter="url(#handdrawn)" rx="3"/>
+            <text x="270" y="260" fill="var(--ink-navy)" font-size="13" font-weight="bold" text-anchor="middle">3. Shared Mgr</text>
+            <path d="M 270,240 L 270,200" stroke="var(--ink-blue)" stroke-width="1.5" stroke-dasharray="3,3" filter="url(#handdrawn)" />
+
+            <!-- 4. The Delays (On-Chip Registers) -->
+            <rect x="360" y="240" width="120" height="60" fill="var(--hl-pink)" opacity="0.3" stroke="var(--ink-red)" stroke-width="2" filter="url(#handdrawn)" rx="3"/>
+            <rect x="370" y="250" width="100" height="15" fill="var(--hl-pink)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+            <rect x="370" y="270" width="100" height="15" fill="var(--hl-pink)" stroke="var(--ink-navy)" stroke-width="1" filter="url(#handdrawn)" />
+            <text x="420" y="315" fill="var(--ink-red)" font-size="13" font-weight="bold" text-anchor="middle">4. On-Chip Registers</text>
+            <text x="420" y="330" fill="var(--ink-black)" font-size="11" text-anchor="middle">(Free context switch)</text>
+
+            <!-- 5. The Scale (High Speed Links) -->
+            <path d="M 350,370 L 350,440" stroke="var(--ink-blue)" stroke-width="8" opacity="0.7" filter="url(#handdrawn)" />
+            <polygon points="340,440 360,440 350,455" fill="var(--ink-blue)" stroke="none" />
+            <path d="M 320,370 L 260,420" stroke="var(--ink-blue)" stroke-width="8" opacity="0.7" filter="url(#handdrawn)" />
+            <polygon points="255,410 270,425 250,425" fill="var(--ink-blue)" stroke="none" />
+            <path d="M 380,370 L 440,420" stroke="var(--ink-blue)" stroke-width="8" opacity="0.7" filter="url(#handdrawn)" />
+            <polygon points="445,410 430,425 450,425" fill="var(--ink-blue)" stroke="none" />
+            <text x="350" y="470" fill="var(--ink-blue)" font-size="16" font-weight="bold" text-anchor="middle">5. Dedicated High-Speed Links to other chips</text>
+
+          </svg>
+        </div>
+
+        <!-- Conclusion -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+          <p>
+            So step back and look at the whole blueprint. You threw out caches and filled the space with math units. You brought memory in close and made the road to it enormous. You bundled the workers under tiny shared managers because the work never branches. You hid the unavoidable delays by always having other work ready and keeping its state on-chip so switching is free. And you wired thousands of chips together with direct high-speed links so they act as one. 
+          </p>
+
+          <p>
+            Every single one of those choices is the same instinct repeated. Spend silicon and effort on <strong class="hl-pink">moving data and keeping the workers fed</strong>, not on making any individual worker clever. 
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            Because in training a model, the math was never the hard part.<br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">Keeping the data flowing was the whole game.</span>
+          </p>
+        </div>
 
       </div>
     </div>

@@ -23,7 +23,7 @@
 
     <!-- Sidebar Navigation -->
     <a href="chapter-13.html" class="nav-sidebar nav-prev">← Chapter 13: CPU-style caches?</a>
-    <a href="chapter-15.html" class="nav-sidebar nav-next">Chapter 15: Designing an LLM processor →</a>
+    <a href="chapter-15.html" class="nav-sidebar nav-next">Chapter 15: Designing an LLM →</a>
 
     <!-- Notebook Header (Date and Days) -->
     <div class="notebook-header">
@@ -53,8 +53,166 @@
 
         <!-- Introduction -->
         <p>
-          <em>Content coming soon...</em>
+          Here's the quiet crisis sitting underneath every AI chip. The compute keeps getting faster, roughly doubling every couple of years, while the memory feeding it barely moves. 
         </p>
+        
+        <p class="text-blue">
+          The cores race ahead, the data delivery crawls, and the gap between them keeps widening. That growing gap has a name, the <strong class="hl-pink">memory wall</strong>, and it is the single biggest problem in modern hardware. Understanding why memory can't just keep up with compute, and the strange engineering trick used to dodge it, explains the shape of every AI chip being built right now.
+        </p>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-pink">The Problem: Fast Compute vs Slow Memory</span></h2>
+
+        <p>
+          Start with the obvious question. Compute speed keeps climbing, so why can't memory speed climb with it? The answer is that they're limited by two different things.
+        </p>
+
+        <p class="text-blue">
+          Compute gets faster because we keep <span class="hl-yellow">shrinking transistors</span>. A smaller transistor switches faster, so packing more, tinier transistors onto a core makes it quicker. That scaling has held for decades.
+        </p>
+
+        <p>
+          Memory is bound by something that doesn't shrink the same way. The data has to travel out of the memory chip through physical metal wires, and a wire has a hard ceiling on how much it can carry. You cannot shrink a wire endlessly the way you shrink a transistor, because past a point the path just chokes. Picture a factory with a machine inside that can sew ten thousand garments a second, but the only door into the factory fits two rolls of cloth at a time. It doesn't matter how fast the machine is. The door is the limit, and the machine sits half-idle waiting for material.
+        </p>
+
+        <p>
+          There's a second, deeper reason memory itself runs slow, down at the level of how a memory chip stores a bit. Inside, each bit lives in a microscopic capacitor, a tiny bucket of charge. Full bucket is a 1, empty bucket is a 0. 
+        </p>
+
+        <p class="text-blue">
+          Now here's the trap. When we shrink the memory chip to fit more bits, those buckets get tinier too. A tiny bucket holds very little charge, and that charge <span class="hl-pink">leaks out fast</span>. If you try to read and refill these tiny leaky buckets at very high speed, the chip starts confusing whether a bucket held a 1 or a 0. So to keep the data reliable, you simply cannot push the memory's internal speed past a certain point. The memory is slow from the inside out, by physics, not by laziness.
+        </p>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-green">The Escape: High Bandwidth Memory (HBM)</span></h2>
+
+        <p>
+          So you have a machine that won't stop getting faster bolted to a supply line that physically refuses to speed up. And the cruel part is that buying a faster chip makes this worse, not better. Double the core speed and you haven't fixed the supply, you've just doubled how fast the cores starve waiting on it. Faster compute against fixed delivery means more idle silicon, not less.
+        </p>
+
+        <p class="text-blue">
+          Now the clever escape. If you can't make memory run faster, you make a huge crowd of it walk together. That's the whole idea behind <strong class="hl-green">High Bandwidth Memory (HBM)</strong>, and it works by changing the physical layout in three ways.
+        </p>
+
+        <ul>
+          <li><strong>First, it stacks the memory vertically.</strong> Old memory chips were scattered flat across the board, spread out and far away. High Bandwidth Memory takes those chips and stacks them into a tower, one on top of another, like a building instead of a sprawl. That saves space and shortens distances.</li>
+          <li><strong>Second, it moves the tower right next to the compute.</strong> Instead of sitting far off on the board with a long road between them, the memory tower is placed on the same base as the GPU, packed in beside it. The distance the data has to travel collapses to almost nothing.</li>
+          <li><strong>Third, and this is the real trick, it replaces a few long wires with <span class="hl-yellow">thousands of tiny vertical ones</span>.</strong> Ordinary memory talks to the chip through a relatively narrow path. High Bandwidth Memory drills thousands of microscopic vertical channels straight through the stacked silicon, so instead of a thin road you get an absurdly wide one. Each individual wire is still slow, bound by the same physics as before. But when thousands of slow wires carry data side by side, the total flood is enormous. This is the principle in one line: <em>if you can't run faster, walk together in a massive crowd.</em></li>
+        </ul>
+
+        <!-- SVG Diagram: Flat RAM vs HBM -->
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 320" width="100%" height="auto" style="display: block; font-family: 'Patrick Hand', cursive; overflow: visible;">
+            <defs>
+              <filter id="handdrawn" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="320">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
+
+            <!-- Left Side: Traditional Flat RAM -->
+            <rect x="20" y="20" width="310" height="280" fill="var(--hl-pink)" opacity="0.1" stroke="var(--ink-red)" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#handdrawn)" rx="10"/>
+            <text x="175" y="45" fill="var(--ink-red)" font-size="18" font-weight="bold" text-anchor="middle">Traditional Flat RAM</text>
+            <text x="175" y="65" fill="var(--ink-black)" font-size="14" font-style="italic" text-anchor="middle">"The Narrow Door"</text>
+
+            <!-- GPU Chip -->
+            <rect x="50" y="140" width="80" height="80" fill="var(--hl-blue)" opacity="0.4" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)" />
+            <text x="90" y="180" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Fast GPU</text>
+
+            <!-- Flat RAM Chips far away -->
+            <rect x="230" y="100" width="70" height="20" fill="var(--hl-yellow)" opacity="0.6" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="230" y="130" width="70" height="20" fill="var(--hl-yellow)" opacity="0.6" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="230" y="160" width="70" height="20" fill="var(--hl-yellow)" opacity="0.6" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="230" y="190" width="70" height="20" fill="var(--hl-yellow)" opacity="0.6" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <text x="265" y="230" fill="var(--ink-navy)" font-size="12" text-anchor="middle">Flat Layout</text>
+
+            <!-- The Narrow Wire / BottleNeck -->
+            <path d="M 130,175 L 230,175" fill="none" stroke="var(--ink-red)" stroke-width="3" filter="url(#handdrawn)" />
+            <polygon points="140,170 130,175 140,180" fill="var(--ink-red)" stroke="none" />
+            
+            <text x="180" y="165" fill="var(--ink-red)" font-size="12" font-weight="bold" text-anchor="middle">Narrow Bus</text>
+            <text x="175" y="270" fill="var(--ink-black)" font-size="13" text-anchor="middle">Long distance. Low bandwidth.</text>
+            <text x="175" y="285" fill="var(--ink-black)" font-size="13" text-anchor="middle">GPU starves for data.</text>
+
+            <!-- Right Side: High Bandwidth Memory (HBM) -->
+            <rect x="370" y="20" width="310" height="280" fill="var(--hl-green)" opacity="0.1" stroke="var(--ink-green)" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#handdrawn)" rx="10"/>
+            <text x="525" y="45" fill="var(--ink-green)" font-size="18" font-weight="bold" text-anchor="middle">High Bandwidth Memory (HBM)</text>
+            <text x="525" y="65" fill="var(--ink-black)" font-size="14" font-style="italic" text-anchor="middle">"The Vertical Crowd"</text>
+
+            <!-- Silicon Interposer (Base) -->
+            <rect x="420" y="210" width="180" height="20" fill="var(--gray-medium)" opacity="0.3" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <text x="510" y="245" fill="var(--ink-navy)" font-size="12" text-anchor="middle">Silicon Base (Interposer)</text>
+
+            <!-- GPU Chip -->
+            <rect x="430" y="130" width="80" height="80" fill="var(--hl-blue)" opacity="0.4" stroke="var(--ink-navy)" stroke-width="2" filter="url(#handdrawn)" />
+            <text x="470" y="175" fill="var(--ink-navy)" font-size="14" font-weight="bold" text-anchor="middle">Fast GPU</text>
+
+            <!-- HBM Stack right next to GPU -->
+            <!-- 4 Layers of memory stacked -->
+            <rect x="530" y="130" width="60" height="15" fill="var(--hl-yellow)" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="530" y="145" width="60" height="15" fill="var(--hl-yellow)" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="530" y="160" width="60" height="15" fill="var(--hl-yellow)" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="530" y="175" width="60" height="15" fill="var(--hl-yellow)" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <rect x="530" y="190" width="60" height="20" fill="var(--ink-navy)" opacity="0.1" stroke="var(--ink-navy)" stroke-width="1.5" filter="url(#handdrawn)" />
+            <text x="560" y="203" fill="var(--ink-navy)" font-size="10" text-anchor="middle">Logic Die</text>
+
+            <text x="560" y="120" fill="var(--ink-navy)" font-size="12" font-weight="bold" text-anchor="middle">HBM Stack</text>
+
+            <!-- Thousands of vertical wires connection (Through Silicon Vias / Base Routing) -->
+            <path d="M 470,210 L 470,220 L 560,220 L 560,210" fill="none" stroke="var(--ink-green)" stroke-width="5" stroke-dasharray="2,2" filter="url(#handdrawn)" />
+            <text x="515" y="265" fill="var(--ink-green)" font-size="12" font-weight="bold" text-anchor="middle">Thousands of vertical wires</text>
+
+            <text x="525" y="285" fill="var(--ink-black)" font-size="13" text-anchor="middle">Zero distance. Massive bandwidth.</text>
+          </svg>
+        </div>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-blue">The AI Catch: Training vs Inference</span></h2>
+
+        <p>
+          And this is exactly why it matters most for AI, specifically for the moment a model answers you. 
+        </p>
+
+        <p class="text-blue">
+          There's a hidden tragedy in how a large language model generates text. To produce each single word, the chip has to pull the model's <strong class="hl-pink">entire set of weights</strong>, an enormous amount of data, from memory into the cores. The math to pick the next word is tiny. The data movement to do it is gigantic. 
+        </p>
+
+        <p>
+          So generating text is brutally memory-bound, the cores do a sliver of math and then sit waiting on a mountain of data to arrive. Without wide memory, those expensive tensor cores would sit mostly idle, starved, and the model would spit out words painfully slowly. The wide memory is the only reason a model can answer you smoothly instead of stalling on every word.
+        </p>
+
+        <p class="text-blue">
+          Worth separating two AI phases here, because the wall hits them differently. <strong class="hl-yellow">Training</strong> a model is often compute-bound. You feed it huge batches of data at once, the cores grab that data and multiply it an enormous number of times, so they're running flat out and the math is the bottleneck. But <strong class="hl-green">Inference</strong>, the answering phase, is memory-bound, because each new word forces another full sweep of the weights out of memory. The same chip, doing two different jobs, gets choked by two different limits.
+        </p>
+
+        <!-- Section 4 -->
+        <h2><span class="hl-yellow">The Footnote: Cost and Rigidity</span></h2>
+
+        <p>
+          One honest footnote, because it explains why this fancy memory isn't in everything. High bandwidth memory is expensive and rigid. Stacking those towers and aligning them onto a shared silicon base beside the GPU is delicate, error-prone manufacturing, and one slip ruins the whole part, which is why it costs several times what ordinary memory does. 
+        </p>
+
+        <p>
+          And because it's fused to the GPU at the factory, you can't upgrade it later the way you swap sticks of RAM in a normal PC. So it lives where the bandwidth is worth the price, in the AI chips fighting the wall, and not in your laptop.
+        </p>
+
+        <!-- Conclusion -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+          <p>
+            The memory wall isn't an engineering failure waiting to be fixed, it's a physics limit baked into wires and capacitors that won't scale like transistors do. 
+          </p>
+
+          <p>
+            Compute will keep sprinting ahead, and memory will keep being the thing that decides whether all that compute actually gets used. The answer wasn't to make memory faster, because we can't. It was to bring it closer, stack it taller, and connect it with thousands of wires at once so a crowd of slow lanes becomes one massive flood.
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">The chip didn't beat the wall. It learned to walk around it.</span>
+          </p>
+        </div>
 
       </div>
     </div>
