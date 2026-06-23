@@ -11,23 +11,789 @@
   <script src="../script.js" defer></script>
 </head>
 <body>
+
   <div class="notebook-wrapper">
+
+    <!-- Sidebar Navigation -->
+    <a href="chapter-16.html" class="nav-sidebar nav-prev">← Chapter 16: Why C++ won't auto-compile to GPU</a>
+    <a href="chapter-18.html" class="nav-sidebar nav-next">Chapter 18: ??? →</a>
+
+    <!-- Notebook Header -->
     <div class="notebook-header">
       <div class="date-row">
         <span class="date-label">date</span>
-        <span class="date-value">coming soon</span>
+        <span class="date-value">02 / jul / 26</span>
+      </div>
+      <div class="days-row">
+        <span>m</span><span>t</span><span>w</span><span class="active">t</span><span>f</span><span>s</span><span>s</span>
       </div>
     </div>
+
+    <!-- Notebook Bordered Box -->
     <div class="notebook-box">
+
       <div class="notebook-title-row">
         <span><span class="title-prefix">THE TRANSLATION BARRIER — </span>Chapter 17</span>
         <a href="../toc.html" class="index-link">index</a>
+        <a href="../index.html" class="index-link" style="margin-left: 12px;">home</a>
       </div>
+
       <div class="notebook-grid-content">
+
+        <!-- Title -->
         <h1><span class="hl-yellow">A kernel is not a function</span></h1>
-        <p>Content for this chapter goes here...</p>
+        <span class="annotation">*stamping the mold*</span>
+
+        <!-- Introduction -->
+        <p>
+          The line <code>add&lt;&lt;&lt;blocks, threads&gt;&gt;&gt;()</code> looks like a function call with some weird symbols bolted on. It isn't. Understanding that one difference is the gap between thinking you write GPU code and actually writing it. 
+        </p>
+
+        <p>
+          When you call a normal function, you wake up one path of logic and your processor walks down it, top to bottom, alone. When you launch a kernel, you are not calling anything. You are <strong class="hl-yellow">stamping out thousands of copies</strong> of the same instructions and handing one to every worker at once.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> So the right way to picture a kernel is not as a function but as a <strong class="hl-pink">mold</strong>. Let's look at how this changes the code.
+        </p>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 440" width="100%" height="auto" style="display:block;font-family:'Patrick Hand',cursive;overflow:visible;">
+            <defs>
+              <filter id="k17a" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="440">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <line x1="233" y1="64" x2="233" y2="360" stroke="var(--ink-blue)" stroke-width="1.5" filter="url(#k17a)"/>
+            <line x1="467" y1="64" x2="467" y2="360" stroke="var(--ink-blue)" stroke-width="1.5" filter="url(#k17a)"/>
+            <text x="117" y="84" fill="var(--ink-blue)" font-size="13" text-anchor="middle" font-weight="bold">CPU FUNCTION CALL</text>
+            <rect x="72" y="102" width="90" height="30" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17a)"/>
+            <text x="117" y="122" fill="var(--ink-navy)" font-size="14" text-anchor="middle">main()</text>
+            <line x1="117" y1="134" x2="117" y2="156" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17a)"/>
+            <line x1="117" y1="156" x2="112" y2="150" stroke="var(--ink-navy)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="117" y1="156" x2="122" y2="150" stroke="var(--ink-navy)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17a)"/>
+            <rect x="72" y="160" width="90" height="30" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17a)"/>
+            <text x="117" y="180" fill="var(--ink-navy)" font-size="14" text-anchor="middle">add()</text>
+            <line x1="117" y1="192" x2="117" y2="214" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17a)"/>
+            <line x1="117" y1="214" x2="112" y2="208" stroke="var(--ink-navy)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="117" y1="214" x2="122" y2="208" stroke="var(--ink-navy)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17a)"/>
+            <text x="117" y="236" fill="var(--ink-navy)" font-size="13" text-anchor="middle">single execution</text>
+            <text x="117" y="254" fill="var(--ink-navy)" font-size="13" text-anchor="middle">path</text>
+            <line x1="117" y1="268" x2="117" y2="286" stroke="var(--ink-navy)" stroke-width="1.2" stroke-dasharray="3,3" filter="url(#k17a)"/>
+            <g filter="url(#k17a)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <circle cx="117" cy="291.5" r="5.7"/>
+              <line x1="117" y1="297.2" x2="117" y2="314.3"/>
+              <line x1="117" y1="301.95" x2="108.45" y2="308.6"/>
+              <line x1="117" y1="301.95" x2="125.55" y2="308.6"/>
+              <line x1="117" y1="314.3" x2="109.4" y2="329.5"/>
+              <line x1="117" y1="314.3" x2="124.6" y2="329.5"/>
+            </g>
+            <text x="350" y="84" fill="var(--ink-blue)" font-size="13" text-anchor="middle" font-weight="bold">GPU KERNEL LAUNCH</text>
+            <rect x="252" y="102" width="196" height="32" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17a)"/>
+            <text x="350" y="123" fill="var(--ink-navy)" font-size="12" text-anchor="middle">add&lt;&lt;&lt;blocks, threads&gt;&gt;&gt;()</text>
+            <line x1="350" y1="136" x2="350" y2="156" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17a)"/>
+            <line x1="350" y1="156" x2="345" y2="150" stroke="var(--ink-navy)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="350" y1="156" x2="355" y2="150" stroke="var(--ink-navy)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17a)"/>
+            <rect x="272" y="162" width="15" height="18" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17a)"/>
+            <rect x="292" y="162" width="15" height="18" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17a)"/>
+            <rect x="312" y="162" width="15" height="18" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17a)"/>
+            <rect x="332" y="162" width="15" height="18" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17a)"/>
+            <rect x="352" y="162" width="15" height="18" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17a)"/>
+            <text x="379" y="176" fill="var(--ink-navy)" font-size="16" text-anchor="middle" font-weight="bold">⋯</text>
+            <rect x="394" y="162" width="15" height="18" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17a)"/>
+            <line x1="300" y1="184" x2="300" y2="204" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="300" y1="204" x2="295" y2="198" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="300" y1="204" x2="305" y2="198" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="340" y1="184" x2="340" y2="204" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="340" y1="204" x2="335" y2="198" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="340" y1="204" x2="345" y2="198" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="380" y1="184" x2="380" y2="204" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="380" y1="204" x2="375" y2="198" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="380" y1="204" x2="385" y2="198" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <text x="350" y="226" fill="var(--ink-navy)" font-size="13" text-anchor="middle">thousands of</text>
+            <text x="350" y="244" fill="var(--ink-navy)" font-size="13" text-anchor="middle">executions</text>
+            <text x="583" y="84" fill="var(--ink-blue)" font-size="13" text-anchor="middle" font-weight="bold">MOLD ANALOGY</text>
+            <rect x="508" y="102" width="150" height="30" rx="4" fill="none" stroke="var(--ink-blue)" stroke-width="1.6" filter="url(#k17a)"/>
+            <text x="583" y="122" fill="var(--ink-navy)" font-size="13" text-anchor="middle">Kernel Blueprint</text>
+            <path d="M520 150 L534 150 L534 174 L632 174 L632 150 L646 150 L646 188 L520 188 Z" fill="var(--paper-bg)" stroke="var(--ink-navy)" stroke-width="2" filter="url(#k17a)"/>
+            <line x1="548" y1="192" x2="548" y2="214" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="548" y1="214" x2="543" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="548" y1="214" x2="553" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="573" y1="192" x2="573" y2="214" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="573" y1="214" x2="568" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="573" y1="214" x2="578" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="598" y1="192" x2="598" y2="214" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="598" y1="214" x2="593" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="598" y1="214" x2="603" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="623" y1="192" x2="623" y2="214" stroke="var(--ink-navy)" stroke-width="1.2" filter="url(#k17a)"/>
+            <line x1="623" y1="214" x2="618" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <line x1="623" y1="214" x2="628" y2="208" stroke="var(--ink-navy)" stroke-width="1.2" stroke-linecap="round" filter="url(#k17a)"/>
+            <g filter="url(#k17a)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <circle cx="530" cy="241.0" r="4.2"/>
+              <line x1="530" y1="245.2" x2="530" y2="257.8"/>
+              <line x1="530" y1="248.7" x2="523.7" y2="253.6"/>
+              <line x1="530" y1="248.7" x2="536.3" y2="253.6"/>
+              <line x1="530" y1="257.8" x2="524.4" y2="269.0"/>
+              <line x1="530" y1="257.8" x2="535.6" y2="269.0"/>
+            </g>
+            <g filter="url(#k17a)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <circle cx="565" cy="241.0" r="4.2"/>
+              <line x1="565" y1="245.2" x2="565" y2="257.8"/>
+              <line x1="565" y1="248.7" x2="558.7" y2="253.6"/>
+              <line x1="565" y1="248.7" x2="571.3" y2="253.6"/>
+              <line x1="565" y1="257.8" x2="559.4" y2="269.0"/>
+              <line x1="565" y1="257.8" x2="570.6" y2="269.0"/>
+            </g>
+            <g filter="url(#k17a)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <circle cx="600" cy="241.0" r="4.2"/>
+              <line x1="600" y1="245.2" x2="600" y2="257.8"/>
+              <line x1="600" y1="248.7" x2="593.7" y2="253.6"/>
+              <line x1="600" y1="248.7" x2="606.3" y2="253.6"/>
+              <line x1="600" y1="257.8" x2="594.4" y2="269.0"/>
+              <line x1="600" y1="257.8" x2="605.6" y2="269.0"/>
+            </g>
+            <text x="622" y="256" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">⋯</text>
+            <g filter="url(#k17a)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <circle cx="645" cy="241.0" r="4.2"/>
+              <line x1="645" y1="245.2" x2="645" y2="257.8"/>
+              <line x1="645" y1="248.7" x2="638.7" y2="253.6"/>
+              <line x1="645" y1="248.7" x2="651.3" y2="253.6"/>
+              <line x1="645" y1="257.8" x2="639.4" y2="269.0"/>
+              <line x1="645" y1="257.8" x2="650.6" y2="269.0"/>
+            </g>
+            <text x="530" y="300" fill="var(--ink-navy)" font-size="11" text-anchor="middle">Th 0</text>
+            <text x="565" y="300" fill="var(--ink-navy)" font-size="11" text-anchor="middle">Th 1</text>
+            <text x="600" y="300" fill="var(--ink-navy)" font-size="11" text-anchor="middle">Th 2</text>
+            <text x="645" y="300" fill="var(--ink-navy)" font-size="11" text-anchor="middle">Th N</text>
+            <text x="583" y="320" fill="var(--ink-navy)" font-size="12" text-anchor="middle">same instructions,</text>
+            <text x="583" y="336" fill="var(--ink-navy)" font-size="12" text-anchor="middle" font-weight="bold">different identities</text>
+            <rect x="120" y="380" width="460" height="56" rx="8" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="6,4" filter="url(#k17a)"/>
+            <text x="350.0" y="404" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">A kernel is not a function call.</text>
+            <text x="350.0" y="426" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">It is a thread blueprint.</text>
+          </svg>
+        </div>
+
+        <p>
+          The code inside the mold is the instruction manual for a <em>single thread</em>. Nowhere in that body do you say how many times it runs. The count is decided entirely by the strange syntax outside, the triple angle brackets.
+        </p>
+
+        <p>
+          Write <code>add&lt;&lt;&lt;1, 1&gt;&gt;&gt;()</code> and it runs once. Write <code>add&lt;&lt;&lt;2, 64&gt;&gt;&gt;()</code> and the exact same code runs <strong class="hl-blue">128 times</strong>. Write <code>add&lt;&lt;&lt;4096, 512&gt;&gt;&gt;()</code> and it runs <strong class="hl-green">two million times</strong>, virtually all at once. One line, one mold, and the hardware pours millions of threads into it.
+        </p>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 340" width="100%" height="auto" style="display:block;font-family:'Patrick Hand',cursive;overflow:visible;">
+            <defs>
+              <filter id="k17b" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="340">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <rect x="40" y="74" width="185" height="32" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17b)"/>
+            <text x="132" y="95" fill="var(--ink-navy)" font-size="14" text-anchor="middle">add&lt;&lt;&lt;1, 1&gt;&gt;&gt;()</text>
+            <line x1="232" y1="90" x2="300" y2="90" stroke="var(--ink-navy)" stroke-width="1.6" filter="url(#k17b)"/>
+            <line x1="300" y1="90" x2="295" y2="86" stroke="var(--ink-navy)" stroke-width="1.6" stroke-linecap="round" filter="url(#k17b)"/>
+            <line x1="300" y1="90" x2="295" y2="94" stroke="var(--ink-navy)" stroke-width="1.6" stroke-linecap="round" filter="url(#k17b)"/>
+            <text x="405" y="88" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">1 thread</text>
+            <rect x="468" y="81" width="16" height="16" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17b)"/>
+            <rect x="40" y="149" width="185" height="32" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17b)"/>
+            <text x="132" y="170" fill="var(--ink-navy)" font-size="14" text-anchor="middle">add&lt;&lt;&lt;2, 64&gt;&gt;&gt;()</text>
+            <line x1="232" y1="165" x2="300" y2="165" stroke="var(--ink-navy)" stroke-width="1.6" filter="url(#k17b)"/>
+            <line x1="300" y1="165" x2="295" y2="161" stroke="var(--ink-navy)" stroke-width="1.6" stroke-linecap="round" filter="url(#k17b)"/>
+            <line x1="300" y1="165" x2="295" y2="169" stroke="var(--ink-navy)" stroke-width="1.6" stroke-linecap="round" filter="url(#k17b)"/>
+            <text x="405" y="159" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">128 threads</text>
+            <text x="405" y="177" fill="var(--ink-navy)" font-size="12" text-anchor="middle">(2 blocks of 64)</text>
+            <rect x="530" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="537" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="544" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="551" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="530" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="537" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="544" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="551" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="530" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="537" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="544" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="551" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="530" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="537" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="544" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="551" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="575" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="582" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="589" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="596" y="153" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="575" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="582" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="589" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="596" y="160" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="575" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="582" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="589" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="596" y="167" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="575" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="582" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="589" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="596" y="174" width="5" height="5" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="40" y="224" width="185" height="32" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17b)"/>
+            <text x="132" y="245" fill="var(--ink-navy)" font-size="13" text-anchor="middle">add&lt;&lt;&lt;4096, 512&gt;&gt;&gt;()</text>
+            <line x1="232" y1="240" x2="300" y2="240" stroke="var(--ink-navy)" stroke-width="1.6" filter="url(#k17b)"/>
+            <line x1="300" y1="240" x2="295" y2="236" stroke="var(--ink-navy)" stroke-width="1.6" stroke-linecap="round" filter="url(#k17b)"/>
+            <line x1="300" y1="240" x2="295" y2="244" stroke="var(--ink-navy)" stroke-width="1.6" stroke-linecap="round" filter="url(#k17b)"/>
+            <text x="400" y="234" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">2,000,000+ threads</text>
+            <text x="400" y="252" fill="var(--ink-navy)" font-size="12" text-anchor="middle">(4096 blocks of 512)</text>
+            <rect x="540" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="546" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="552" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="558" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="540" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="546" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="552" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="558" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="540" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="546" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="552" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="558" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="540" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="546" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="552" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="558" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="580" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="586" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="592" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="598" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="580" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="586" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="592" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="598" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="580" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="586" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="592" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="598" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="580" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="586" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="592" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="598" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="620" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="626" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="632" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="638" y="228" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="620" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="626" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="632" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="638" y="234" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="620" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="626" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="632" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="638" y="240" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="620" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="626" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="632" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <rect x="638" y="246" width="4" height="4" fill="none" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17b)"/>
+            <text x="665" y="242" fill="var(--ink-navy)" font-size="16" text-anchor="middle" font-weight="bold">⋯</text>
+            <rect x="70" y="286" width="560" height="34" rx="8" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="6,4" filter="url(#k17b)"/>
+            <text x="350.0" y="309.0" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">Kernel code never changes — the thread count lives outside the body.</text>
+          </svg>
+        </div>
+
+        <!-- Section 1 -->
+        <h2><span class="hl-blue">Identity Math: Avoiding Redundancy</span></h2>
+
+        <p>
+          Now the objection that should immediately bother you. If all those millions of threads run the identical code, isn't that pointless? Wouldn't every thread read the same data, do the same math, and write the same answer—a giant pile of <strong class="hl-red">redundant work</strong>?
+        </p>
+
+        <p>
+          It would, if the body were empty. But it isn't, because <strong class="hl-yellow">every thread knows who it is</strong>. You never write a fixed data address in the code. Instead you write a formula, and each thread plugs its own identity into that formula to land on its own slice of data. 
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> Its position is its thread number inside its block, plus its block number times the size of a block. So the same single line of code sends every thread to a different address.
+        </p>
+
+        <p>Walk it through concretely. You launch two blocks of 64 threads, so 128 threads total covering a 128-element array:</p>
+
+        <ol>
+          <li><span class="text-blue bold">Thread 5 in Block 1:</span> It computes its index as <code>5 + (1 * 64) = 69</code>, so it works on element 69.</li>
+          <li><span class="text-red bold">Thread 5 in Block 0:</span> It computes its index as <code>5 + (0 * 64) = 5</code>, so it works on element 5.</li>
+        </ol>
+
+        <p>
+          Same code, same formula, completely different targets. No overlap, no redundancy. The <strong class="hl-green">identity math</strong> is what turns one blueprint into millions of non-colliding workers.
+        </p>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 560" width="100%" height="auto" style="display:block;font-family:'Patrick Hand',cursive;overflow:visible;">
+            <defs>
+              <filter id="k17c" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="560">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <text x="350" y="78" fill="var(--ink-blue)" font-size="15" text-anchor="middle" font-weight="bold">EVERY THREAD COMPUTES ITS OWN INDEX</text>
+            <rect x="190" y="90" width="320" height="88" rx="6" fill="var(--paper-bg)" stroke="var(--ink-navy)" stroke-width="1.8" filter="url(#k17c)"/>
+            <text x="350" y="116" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">global_id =</text>
+            <text x="350" y="140" font-size="15" font-weight="bold" text-anchor="middle"><tspan fill="var(--ink-blue)">blockIdx.x</tspan><tspan fill="var(--ink-navy)"> &#215; </tspan><tspan fill="var(--ink-green)">blockDim.x</tspan></text>
+            <text x="350" y="162" font-size="15" font-weight="bold" text-anchor="middle"><tspan fill="var(--ink-navy)">+ </tspan><tspan fill="var(--ink-red)">threadIdx.x</tspan></text>
+            <line x1="350" y1="196" x2="350" y2="350" stroke="var(--ink-blue)" stroke-width="1.4" stroke-dasharray="3,4" filter="url(#k17c)"/>
+            <text x="190" y="214" fill="var(--ink-blue)" font-size="14" text-anchor="middle" font-weight="bold">BLOCK 0</text>
+            <rect x="94" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="106.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">0</text>
+            <rect x="118" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="130.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">1</text>
+            <rect x="142" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="154.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">2</text>
+            <rect x="166" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="178.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">3</text>
+            <rect x="190" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="202.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">4</text>
+            <rect x="214" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="226.0" y="241.0" fill="var(--ink-red)" font-size="13" text-anchor="middle" font-weight="bold">5</text>
+            <rect x="238" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="250.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">⋯</text>
+            <rect x="262" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="274.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">63</text>
+            <rect x="212" y="222" width="28" height="28" fill="none" stroke="var(--ink-red)" stroke-width="2" filter="url(#k17c)"/>
+            <line x1="226" y1="252" x2="226" y2="274" stroke="var(--ink-red)" stroke-width="1.4" filter="url(#k17c)"/>
+            <line x1="226" y1="274" x2="221" y2="268" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <line x1="226" y1="274" x2="231" y2="268" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <text x="190" y="296" font-size="14" text-anchor="middle"><tspan fill="var(--ink-red)">thread 5</tspan><tspan fill="var(--ink-navy)">, </tspan><tspan fill="var(--ink-blue)">block 0</tspan></text>
+            <text x="190" y="318" font-size="15" font-weight="bold" text-anchor="middle"><tspan fill="var(--ink-navy)">5 + ( </tspan><tspan fill="var(--ink-blue)">0</tspan><tspan fill="var(--ink-navy)"> &#215; </tspan><tspan fill="var(--ink-green)">64</tspan><tspan fill="var(--ink-navy)"> ) = </tspan><tspan fill="var(--ink-red)">5</tspan></text>
+            <text x="190" y="338" fill="var(--ink-navy)" font-size="13" text-anchor="middle">→ works on element 5</text>
+            <text x="510" y="214" fill="var(--ink-blue)" font-size="14" text-anchor="middle" font-weight="bold">BLOCK 1</text>
+            <rect x="414" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="426.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">0</text>
+            <rect x="438" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="450.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">1</text>
+            <rect x="462" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="474.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">2</text>
+            <rect x="486" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="498.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">3</text>
+            <rect x="510" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="522.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">4</text>
+            <rect x="534" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="546.0" y="241.0" fill="var(--ink-red)" font-size="13" text-anchor="middle" font-weight="bold">5</text>
+            <rect x="558" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="570.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">⋯</text>
+            <rect x="582" y="224" width="24" height="24" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="594.0" y="241.0" fill="var(--ink-navy)" font-size="13" text-anchor="middle">63</text>
+            <rect x="532" y="222" width="28" height="28" fill="none" stroke="var(--ink-red)" stroke-width="2" filter="url(#k17c)"/>
+            <line x1="546" y1="252" x2="546" y2="274" stroke="var(--ink-red)" stroke-width="1.4" filter="url(#k17c)"/>
+            <line x1="546" y1="274" x2="541" y2="268" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <line x1="546" y1="274" x2="551" y2="268" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <text x="510" y="296" font-size="14" text-anchor="middle"><tspan fill="var(--ink-red)">thread 5</tspan><tspan fill="var(--ink-navy)">, </tspan><tspan fill="var(--ink-blue)">block 1</tspan></text>
+            <text x="510" y="318" font-size="15" font-weight="bold" text-anchor="middle"><tspan fill="var(--ink-navy)">5 + ( </tspan><tspan fill="var(--ink-blue)">1</tspan><tspan fill="var(--ink-navy)"> &#215; </tspan><tspan fill="var(--ink-green)">64</tspan><tspan fill="var(--ink-navy)"> ) = </tspan><tspan fill="var(--ink-red)">69</tspan></text>
+            <text x="510" y="338" fill="var(--ink-navy)" font-size="13" text-anchor="middle">→ works on element 69</text>
+            <text x="350" y="374" fill="var(--ink-blue)" font-size="14" text-anchor="middle" font-weight="bold">ONE ARRAY OF 128 ELEMENTS</text>
+            <text x="150" y="396" fill="var(--ink-red)" font-size="12" text-anchor="middle" font-weight="bold">block 0 → elem 5</text>
+            <text x="545" y="396" fill="var(--ink-red)" font-size="12" text-anchor="middle" font-weight="bold">block 1 → elem 69</text>
+            <rect x="42" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="62.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">0</text>
+            <rect x="83" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="103.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">1</text>
+            <rect x="124" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="144.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">2</text>
+            <rect x="165" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="185.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">3</text>
+            <rect x="206" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="226.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">4</text>
+            <rect x="247" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="267.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">5</text>
+            <rect x="288" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="308.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">6</text>
+            <rect x="329" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="349.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">7</text>
+            <rect x="370" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="390.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">⋯</text>
+            <rect x="411" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="431.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">68</text>
+            <rect x="452" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="472.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">69</text>
+            <rect x="493" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="513.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">70</text>
+            <rect x="534" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="554.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">⋯</text>
+            <rect x="575" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="595.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">126</text>
+            <rect x="616" y="414" width="41" height="28" fill="none" stroke="var(--ink-navy)" stroke-width="1.3" filter="url(#k17c)"/>
+            <text x="636.5" y="433.0" fill="var(--ink-navy)" font-size="12" text-anchor="middle">127</text>
+            <rect x="245" y="412" width="45" height="32" fill="none" stroke="var(--ink-red)" stroke-width="2.2" filter="url(#k17c)"/>
+            <rect x="450" y="412" width="45" height="32" fill="none" stroke="var(--ink-red)" stroke-width="2.2" filter="url(#k17c)"/>
+            <line x1="267.5" y1="402" x2="267.5" y2="412" stroke="var(--ink-red)" stroke-width="1.4" filter="url(#k17c)"/>
+            <line x1="267.5" y1="412" x2="262.5" y2="406" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <line x1="267.5" y1="412" x2="272.5" y2="406" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <line x1="472.5" y1="402" x2="472.5" y2="412" stroke="var(--ink-red)" stroke-width="1.4" filter="url(#k17c)"/>
+            <line x1="472.5" y1="412" x2="467.5" y2="406" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <line x1="472.5" y1="412" x2="477.5" y2="406" stroke="var(--ink-red)" stroke-width="1.4" stroke-linecap="round" filter="url(#k17c)"/>
+            <rect x="40" y="474" width="620" height="34" rx="8" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="6,4" filter="url(#k17c)"/>
+            <text x="350.0" y="497.0" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">Identity math turns one blueprint into millions of unique workers.</text>
+          </svg>
+        </div>
+
+        <!-- Section 2 -->
+        <h2><span class="hl-pink">The Booking Ticket: Free Scaling</span></h2>
+
+        <p>
+          Now the question that reveals the real engineering. Your hardware is a fixed size. Say you have an old chip with only two of those processing units. And you launch four thousand blocks. A normal program would need a loop to grind through that many. How does the GPU run four thousand blocks on two units without a loop and without crashing?
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> The answer is that the GPU never looks at the whole grid at once. It only ever looks at <strong class="hl-yellow">one block at a time</strong>. 
+        </p>
+
+        <p>
+          You launch four thousand blocks and they all go into a queue. The two processing units each grab one block, run all its threads to completion, and the instant a unit finishes its block, it reaches into the queue and pulls the next waiting one. Block 0 and block 1 run first, then block 2 and block 3, and so on, the hardware chewing through the queue at its own pace. You never wrote a loop. The hardware serialized the work itself, according to how many units it physically has.
+        </p>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 460" width="100%" height="auto" style="display:block;font-family:'Patrick Hand',cursive;overflow:visible;">
+            <defs>
+              <filter id="k17d" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="460">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <text x="40" y="72" fill="var(--ink-navy)" font-size="14" text-anchor="start" font-style="italic">Launch 4000 blocks → they all wait in a queue.</text>
+            <text x="280" y="100" fill="var(--ink-blue)" font-size="14" text-anchor="middle" font-weight="bold">BLOCK QUEUE</text>
+            <rect x="55" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="75" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B0</text>
+            <rect x="97" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="117" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B1</text>
+            <rect x="139" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="159" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B2</text>
+            <rect x="181" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="201" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B3</text>
+            <rect x="223" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="243" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B4</text>
+            <rect x="265" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="285" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B5</text>
+            <rect x="307" y="110" width="40" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="327" y="130" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">B6</text>
+            <text x="360" y="130" fill="var(--ink-navy)" font-size="18" text-anchor="middle" font-weight="bold">⋯</text>
+            <rect x="382" y="110" width="58" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="411" y="130" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B3998</text>
+            <rect x="444" y="110" width="58" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="473" y="130" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B3999</text>
+            <text x="40" y="172" fill="var(--ink-navy)" font-size="13" text-anchor="start">GPU with 2 SMs (processing units):</text>
+            <rect x="150" y="184" width="80" height="30" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="2" filter="url(#k17d)"/>
+            <text x="190" y="204" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">SM 0</text>
+            <rect x="290" y="184" width="80" height="30" rx="4" fill="none" stroke="var(--ink-green)" stroke-width="2" filter="url(#k17d)"/>
+            <text x="330" y="204" fill="var(--ink-navy)" font-size="14" text-anchor="middle" font-weight="bold">SM 1</text>
+            <text x="60" y="244" fill="var(--ink-navy)" font-size="13" text-anchor="start">each SM grabs a block, runs it, then pulls the next:</text>
+            <text x="95" y="270" fill="var(--ink-navy)" font-size="11" text-anchor="middle">time</text>
+            <text x="190" y="270" fill="var(--ink-blue)" font-size="12" text-anchor="middle" font-weight="bold">SM 0</text>
+            <text x="330" y="270" fill="var(--ink-blue)" font-size="12" text-anchor="middle" font-weight="bold">SM 1</text>
+            <text x="95" y="300" fill="var(--ink-navy)" font-size="13" text-anchor="middle">t₀</text>
+            <rect x="160" y="282" width="60" height="26" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="190" y="300" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B0</text>
+            <rect x="300" y="282" width="60" height="26" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="330" y="300" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B1</text>
+            <text x="95" y="332" fill="var(--ink-navy)" font-size="13" text-anchor="middle">t₁</text>
+            <rect x="160" y="314" width="60" height="26" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="190" y="332" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B2</text>
+            <rect x="300" y="314" width="60" height="26" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="330" y="332" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B3</text>
+            <text x="95" y="364" fill="var(--ink-navy)" font-size="13" text-anchor="middle">t₂</text>
+            <rect x="160" y="346" width="60" height="26" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="190" y="364" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B4</text>
+            <rect x="300" y="346" width="60" height="26" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17d)"/>
+            <text x="330" y="364" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">B5</text>
+            <text x="190" y="386" fill="var(--ink-navy)" font-size="16" text-anchor="middle" font-weight="bold">⋮</text>
+            <text x="330" y="386" fill="var(--ink-navy)" font-size="16" text-anchor="middle" font-weight="bold">⋮</text>
+            <rect x="440" y="250" width="220" height="104" rx="6" fill="none" stroke="var(--ink-blue)" stroke-width="1.4" stroke-dasharray="4,4" filter="url(#k17d)"/>
+            <text x="550" y="280" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">No software loop.</text>
+            <text x="550" y="304" fill="var(--ink-navy)" font-size="13" text-anchor="middle" font-weight="bold">No recompile.</text>
+            <text x="550" y="328" fill="var(--ink-navy)" font-size="13" text-anchor="middle">Hardware serializes</text>
+            <text x="550" y="346" fill="var(--ink-navy)" font-size="13" text-anchor="middle">the work for you.</text>
+            <rect x="40" y="402" width="620" height="56" rx="8" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="6,4" filter="url(#k17d)"/>
+            <text x="350.0" y="426" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">Blocks are booking tickets — the GPU runs what it can,</text>
+            <text x="350.0" y="448" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">queues the rest, and scales to any size of chip.</text>
+          </svg>
+        </div>
+
+        <p>
+          And this is the quiet genius of the block. It is a <strong class="hl-yellow">booking ticket</strong>. The hardware looks at a block, checks if it has room, admits it if so, queues it if not. Which means the same code you wrote runs on that two-unit chip slowly but correctly, and five years later runs on a hundred-unit chip blazingly fast, grabbing a hundred blocks at once, without you changing a single line. The block is what decouples your code from the size of the machine.
+        </p>
+
+        <!-- Section 3 -->
+        <h2><span class="hl-yellow">The Cost of Tiny Blocks</span></h2>
+
+        <p>
+          Now the cost that almost everyone trips on, and it ties straight back to how the hardware actually executes. Remember that the real unit of execution is the warp, a fixed bundle of 32 threads that move together. The hardware cannot mix threads from different blocks into one warp, and it always reserves resources for a full warp of 32 even if you use fewer.
+        </p>
+
+        <p>
+          Watch what happens when you launch tiny blocks. Say two threads per block. The hardware still reserves a whole warp of 32 lanes for them, runs the fetch and decode for all 32, burns the power for all 32, and then only 2 lanes do any useful work while the other 30 sit switched off. 
+        </p>
+
+        <p class="text-red">
+          <span class="arrow">↳</span> That is roughly <strong class="hl-red">6 percent efficiency</strong>. You paid for a full warp and used a sixteenth of it.
+        </p>
+
+        <p>
+          And <code>add&lt;&lt;&lt;1, 1&gt;&gt;&gt;()</code>, a single thread, is the worst case of all. One slow GPU lane running alone, no neighbors to hide memory delay, every other unit idle, plus the cost of shipping data across to the GPU and back. You took a machine built to run a million things at once and asked it to run one. It loses badly to a single CPU core, which runs at a much higher clock and is actually built for solo work.
+        </p>
+
+        <p>
+          This is exactly why real GPU code never uses block sizes like 2 or 37. A block of 37 fills one warp of 32 and then spills 5 threads into a second warp, wasting most of that second warp's 32 lanes. 
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> Block sizes are always multiples of 32, and usually 128, 256, or 512, so the warps pack full and no lanes go idle. The magic number 32 from the hardware reaches all the way up into how you choose to launch your code.
+        </p>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 470" width="100%" height="auto" style="display:block;font-family:'Patrick Hand',cursive;overflow:visible;">
+            <defs>
+              <filter id="k17e" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="470">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <text x="40" y="70" fill="var(--ink-navy)" font-size="13" text-anchor="start" font-style="italic">The GPU reserves a FULL warp of 32 lanes — even if you use fewer.</text>
+            <line x1="240" y1="86" x2="240" y2="300" stroke="var(--ink-blue)" stroke-width="1.4" stroke-dasharray="3,4" filter="url(#k17e)"/>
+            <line x1="460" y1="86" x2="460" y2="300" stroke="var(--ink-blue)" stroke-width="1.4" stroke-dasharray="3,4" filter="url(#k17e)"/>
+            <text x="130" y="106" fill="var(--ink-blue)" font-size="13" text-anchor="middle" font-weight="bold">block size = 2</text>
+            <text x="130" y="124" fill="var(--ink-navy)" font-size="11" text-anchor="middle">1 warp reserved</text>
+            <rect x="42" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="54" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="66" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="78" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="90" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="102" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="114" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="126" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="138" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="150" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="162" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="174" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="186" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="198" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="210" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="222" y="150" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="42" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="54" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="66" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="78" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="90" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="102" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="114" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="126" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="138" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="150" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="162" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="174" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="186" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="198" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="210" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="222" y="166" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <text x="130" y="250" fill="var(--ink-navy)" font-size="13" text-anchor="middle">active 2 / 32</text>
+            <text x="130" y="270" fill="var(--ink-red)" font-size="13" text-anchor="middle" font-weight="bold">efficiency 6.25%</text>
+            <text x="130" y="290" fill="var(--ink-red)" font-size="13" text-anchor="middle" font-weight="bold" font-style="italic">terrible!</text>
+            <text x="350" y="106" fill="var(--ink-blue)" font-size="13" text-anchor="middle" font-weight="bold">block size = 32</text>
+            <text x="350" y="124" fill="var(--ink-navy)" font-size="11" text-anchor="middle">1 warp, full</text>
+            <rect x="262" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="274" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="286" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="298" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="310" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="322" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="334" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="346" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="358" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="370" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="382" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="394" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="406" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="418" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="430" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="442" y="150" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="262" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="274" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="286" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="298" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="310" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="322" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="334" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="346" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="358" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="370" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="382" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="394" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="406" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="418" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="430" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="442" y="166" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <text x="350" y="250" fill="var(--ink-navy)" font-size="13" text-anchor="middle">active 32 / 32</text>
+            <text x="350" y="270" fill="var(--ink-green)" font-size="13" text-anchor="middle" font-weight="bold">efficiency 100%</text>
+            <text x="350" y="290" fill="var(--ink-green)" font-size="13" text-anchor="middle" font-weight="bold" font-style="italic">perfect!</text>
+            <text x="570" y="106" fill="var(--ink-blue)" font-size="13" text-anchor="middle" font-weight="bold">block size = 37</text>
+            <text x="570" y="124" fill="var(--ink-navy)" font-size="11" text-anchor="middle">2 warps reserved</text>
+            <text x="498" y="140" fill="var(--ink-navy)" font-size="10" text-anchor="start">warp 0</text>
+            <rect x="498" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="510" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="522" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="534" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="546" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="558" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="570" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="582" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="594" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="606" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="618" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="630" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="642" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="654" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="666" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="678" y="146" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="498" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="510" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="522" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="534" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="546" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="558" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="570" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="582" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="594" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="606" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="618" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="630" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="642" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="654" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="666" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="678" y="162" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <text x="498" y="196" fill="var(--ink-navy)" font-size="10" text-anchor="start">warp 1</text>
+            <rect x="498" y="202" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="510" y="202" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="522" y="202" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="534" y="202" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="546" y="202" width="11" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17e)"/>
+            <rect x="558" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="570" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="582" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="594" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="606" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="618" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="630" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="642" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="654" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="666" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="678" y="202" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="498" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="510" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="522" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="534" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="546" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="558" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="570" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="582" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="594" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="606" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="618" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="630" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="642" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="654" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="666" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <rect x="678" y="218" width="11" height="15" fill="none" stroke="var(--ink-navy)" stroke-width="1" opacity="0.5" filter="url(#k17e)"/>
+            <text x="570" y="250" fill="var(--ink-navy)" font-size="13" text-anchor="middle">active 37 / 64</text>
+            <text x="570" y="270" fill="var(--ink-red)" font-size="13" text-anchor="middle" font-weight="bold">efficiency 57.8%</text>
+            <text x="570" y="290" fill="var(--ink-red)" font-size="13" text-anchor="middle" font-weight="bold" font-style="italic">wasteful!</text>
+            <line x1="60" y1="314" x2="640" y2="314" stroke="var(--ink-blue)" stroke-width="0.8" stroke-dasharray="3,4" filter="url(#k17e)"/>
+            <text x="350" y="344" fill="var(--ink-blue)" font-size="14" text-anchor="middle" font-weight="bold">good block sizes — always multiples of 32</text>
+            <rect x="230" y="360" width="64" height="34" rx="5" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17e)"/>
+            <text x="262" y="382" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">128</text>
+            <rect x="312" y="360" width="64" height="34" rx="5" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17e)"/>
+            <text x="344" y="382" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">256</text>
+            <rect x="394" y="360" width="64" height="34" rx="5" fill="none" stroke="var(--ink-green)" stroke-width="1.8" filter="url(#k17e)"/>
+            <text x="426" y="382" fill="var(--ink-navy)" font-size="15" text-anchor="middle" font-weight="bold">512</text>
+            <path d="M474 380 L482 390 L498 366" fill="none" stroke="var(--ink-green)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#k17e)"/>
+            <rect x="40" y="418" width="620" height="34" rx="8" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="6,4" filter="url(#k17e)"/>
+            <text x="350.0" y="441.0" fill="var(--ink-red)" font-size="15" text-anchor="middle" font-weight="bold">Launch threads in multiples of 32 — typically 128, 256, or 512.</text>
+          </svg>
+        </div>
+
+        <div style="margin-bottom: var(--grid-size); text-align: center;">
+          <p class="handwritten-highlight text-blue" style="margin-bottom: 0; text-align: center;">
+            ↳ The cleanest way to remember the warp penalty:
+          </p>
+          <p class="hl-yellow" style="font-family: 'Space Mono', monospace; font-size: 15px; display: inline-block; padding: 0 10px; margin-top: 0; margin-bottom: 0; line-height: var(--grid-size); height: var(--grid-size); border-radius: 4px; letter-spacing: normal;">
+            Blocks must pack in 32s. 37 threads = 64 slots paid for.
+          </p>
+        </div>
+
+        <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
+          <svg viewBox="0 0 700 440" width="100%" height="auto" style="display:block;font-family:'Patrick Hand',cursive;overflow:visible;">
+            <defs>
+              <filter id="k17f" filterUnits="userSpaceOnUse" x="0" y="0" width="700" height="440">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+            </defs>
+            <text x="350" y="74" fill="var(--ink-blue)" font-size="16" text-anchor="middle" font-weight="bold">THE WHOLE PICTURE</text>
+            <line x1="56" y1="94" x2="56" y2="366" stroke="var(--ink-red)" stroke-width="2" filter="url(#k17f)"/>
+            <path d="M86 110 L98 110 L98 128 L132 128 L132 110 L144 110 L144 140 L86 140 Z" fill="var(--paper-bg)" stroke="var(--ink-navy)" stroke-width="2" filter="url(#k17f)"/>
+            <line x1="104" y1="144" x2="104" y2="154" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17f)"/>
+            <line x1="104" y1="154" x2="99" y2="148" stroke="var(--ink-navy)" stroke-width="1" stroke-linecap="round" filter="url(#k17f)"/>
+            <line x1="104" y1="154" x2="109" y2="148" stroke="var(--ink-navy)" stroke-width="1" stroke-linecap="round" filter="url(#k17f)"/>
+            <line x1="115" y1="144" x2="115" y2="154" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17f)"/>
+            <line x1="115" y1="154" x2="110" y2="148" stroke="var(--ink-navy)" stroke-width="1" stroke-linecap="round" filter="url(#k17f)"/>
+            <line x1="115" y1="154" x2="120" y2="148" stroke="var(--ink-navy)" stroke-width="1" stroke-linecap="round" filter="url(#k17f)"/>
+            <line x1="126" y1="144" x2="126" y2="154" stroke="var(--ink-navy)" stroke-width="1" filter="url(#k17f)"/>
+            <line x1="126" y1="154" x2="121" y2="148" stroke="var(--ink-navy)" stroke-width="1" stroke-linecap="round" filter="url(#k17f)"/>
+            <line x1="126" y1="154" x2="131" y2="148" stroke="var(--ink-navy)" stroke-width="1" stroke-linecap="round" filter="url(#k17f)"/>
+            <text x="182" y="118" fill="var(--ink-navy)" font-size="15" text-anchor="start" font-weight="bold">KERNEL  =  a mold (blueprint)</text>
+            <text x="182" y="140" fill="var(--ink-navy)" font-size="13" text-anchor="start">the instructions for one single thread</text>
+            <line x1="72" y1="160" x2="660" y2="160" stroke="var(--ink-navy)" stroke-width="0.7" stroke-dasharray="2,5" filter="url(#k17f)"/>
+            <g filter="url(#k17f)" stroke="var(--ink-navy)" stroke-width="2" fill="none">
+              <circle cx="115" cy="190.5" r="5.1"/>
+              <line x1="115" y1="195.6" x2="115" y2="210.9"/>
+              <line x1="115" y1="199.85" x2="107.35" y2="205.8"/>
+              <line x1="115" y1="199.85" x2="122.65" y2="205.8"/>
+              <line x1="115" y1="210.9" x2="108.2" y2="224.5"/>
+              <line x1="115" y1="210.9" x2="121.8" y2="224.5"/>
+            </g>
+            <text x="182" y="194" fill="var(--ink-navy)" font-size="15" text-anchor="start" font-weight="bold">THREAD  =  an index + a program counter</text>
+            <text x="182" y="216" fill="var(--ink-navy)" font-size="13" text-anchor="start">knows who it is, computes its own data</text>
+            <line x1="72" y1="236" x2="660" y2="236" stroke="var(--ink-navy)" stroke-width="0.7" stroke-dasharray="2,5" filter="url(#k17f)"/>
+            <rect x="88" y="278" width="56" height="30" rx="3" fill="none" stroke="var(--ink-navy)" stroke-width="1.6" filter="url(#k17f)"/>
+            <circle cx="88" cy="293" r="4" fill="var(--paper-bg)" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17f)"/>
+            <circle cx="144" cy="293" r="4" fill="var(--paper-bg)" stroke="var(--ink-navy)" stroke-width="1.4" filter="url(#k17f)"/>
+            <line x1="116" y1="280" x2="116" y2="306" stroke="var(--ink-navy)" stroke-width="1" stroke-dasharray="2,2" filter="url(#k17f)"/>
+            <text x="182" y="270" fill="var(--ink-navy)" font-size="15" text-anchor="start" font-weight="bold">BLOCK  =  a booking ticket</text>
+            <text x="182" y="292" fill="var(--ink-navy)" font-size="13" text-anchor="start">admitted now, or queued for resources</text>
+            <line x1="72" y1="312" x2="660" y2="312" stroke="var(--ink-navy)" stroke-width="0.7" stroke-dasharray="2,5" filter="url(#k17f)"/>
+            <rect x="86" y="340" width="13" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17f)"/>
+            <rect x="101" y="340" width="13" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17f)"/>
+            <rect x="116" y="340" width="13" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17f)"/>
+            <rect x="131" y="340" width="13" height="15" fill="var(--ink-green)" stroke="var(--ink-green)" stroke-width="1" filter="url(#k17f)"/>
+            <text x="182" y="346" fill="var(--ink-navy)" font-size="15" text-anchor="start" font-weight="bold">WARP  =  the real execution unit</text>
+            <text x="182" y="368" fill="var(--ink-navy)" font-size="13" text-anchor="start">32 lanes locked in lockstep</text>
+            <rect x="40" y="392" width="620" height="34" rx="8" fill="none" stroke="var(--ink-red)" stroke-width="2" stroke-dasharray="6,4" filter="url(#k17f)"/>
+            <text x="350.0" y="415.0" fill="var(--ink-red)" font-size="14" text-anchor="middle" font-weight="bold">Write a kernel as a blueprint stamped across an army — and it clicks.</text>
+          </svg>
+        </div>
+
+        <!-- Takeaway -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+          <p>
+            So the whole picture. A kernel is a mold, not a function. The angle brackets decide how many workers pour into it, and the body is just one worker's instructions. Redundancy is avoided because every worker computes its own identity and lands on its own data.
+          </p>
+          <p>
+            The work scales across any size of chip because blocks queue up and get pulled as units finish, no loop, no recompile. And the price of all this is that you must respect the warp, launching threads in full bundles of 32 or watching the hardware idle on your behalf.
+          </p>
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            Write a kernel thinking it's a function and the hardware confuses you.<br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">Write it knowing it's a blueprint stamped across an army, and it finally makes sense.</span>
+          </p>
+        </div>
+
       </div>
     </div>
   </div>
+
 </body>
 </html>
