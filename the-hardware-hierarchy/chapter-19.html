@@ -46,7 +46,7 @@
 
         <!-- Intro -->
         <p>
-          A GPU has thousands of threads, and you would think the natural thing is to tell them all to pause at a line and wait for each other, the way you sync any group of workers. On a GPU, you cannot do that. There is no way to make every thread in a launch stop and wait at a global barrier, and the reason why is one of the most beautiful constraints in all of hardware. It comes down to two ideas: that closeness is speed, and that waiting can freeze the whole machine.
+          A GPU has thousands of threads, and you would think the natural thing is to tell them all to pause at a line and wait for each other, the way you sync any group of workers. On a GPU, <strong class="hl-red">you cannot do that</strong>. There is no way to make every thread in a launch stop and wait at a global barrier, and the reason why is one of the most beautiful constraints in all of hardware. It comes down to two ideas: that <strong class="hl-yellow">closeness is speed</strong>, and that <strong class="hl-pink">waiting can freeze the whole machine</strong>.
         </p>
 
         <p class="text-blue">
@@ -54,7 +54,7 @@
         </p>
 
         <p>
-          A <strong class="hl-yellow">block</strong> is software, just a number you pick in your code, a team of say 256 threads. You fully control it. An <strong class="hl-blue">SM</strong> (Streaming Multiprocessor) is hardware, an actual physical room etched into the silicon with real math cores, real wires, and a real slab of fast memory inside it. You cannot change it, NVIDIA built it into the chip. So a block is a paper plan, and an SM is the building the plan runs in.
+          A <strong class="hl-yellow">block</strong> is software, just a number you pick in your code, a team of say 256 threads. You fully control it. An <strong class="hl-blue">SM</strong> (Streaming Multiprocessor) is hardware, an actual physical room etched into the silicon with real math cores, real wires, and a real slab of fast memory inside it. You cannot change it, NVIDIA built it into the chip. So a block is <strong class="hl-green">a paper plan</strong>, and an SM is <strong class="hl-pink">the building the plan runs in</strong>.
         </p>
 
         <!-- DIAGRAM 1: Software Plan vs Physical Room (k19a) -->
@@ -65,15 +65,15 @@
         <h2><span class="hl-blue">Question 1: Why bundle threads into blocks at all?</span></h2>
 
         <p>
-          Why not just launch a million fully independent threads and let the hardware sort them out? Because <strong class="hl-red">independence is expensive in silicon</strong>.
+          Why not just launch a million fully independent threads and let the hardware sort them out? Because <strong class="hl-red">independence is expensive in silicon</strong>. Every thread needs its own little scheduler.
         </p>
 
         <p>
-          A million independent threads would need a million little schedulers and a million separate pieces of state-tracking hardware just to keep them straight. All of that management machinery would eat the chip, leaving no room for the math units that are the whole point.
+          A million independent threads would need a million little schedulers and a million separate pieces of <strong class="hl-yellow">state-tracking hardware</strong> just to keep them straight. All of that management machinery would eat the chip, leaving <strong class="hl-pink">no room for the math units</strong> that are the whole point.
         </p>
 
         <p>
-          So the block is the compromise. You pin a team of threads to one physical room (the SM), and now a single scheduler manages the whole team and they share one pool of resources. The management stays cheap, and the silicon stays mostly math.
+          So the block is the compromise. You pin a team of threads to <strong class="hl-blue">one physical room</strong> (the SM), and now a single scheduler manages the whole team and they share one pool of resources. The management stays cheap, and <strong class="hl-green">the silicon stays mostly math</strong>.
         </p>
 
         <!-- DIAGRAM 2: Independence is Expensive (k19b) -->
@@ -84,11 +84,11 @@
         <h2><span class="hl-yellow">Question 2: Why must a block stay on one SM?</span></h2>
 
         <p>
-          This is where closeness enters. Why can't half of a block run in one room and half in another? Because the fast scratchpad memory the team shares is physically inside the SM. It's a tiny slab of ultra-fast memory sitting millimeters from the cores, reachable through short local wires.
+          This is where closeness enters. Why can't half of a block run in one room and half in another? Because the <strong class="hl-yellow">fast scratchpad memory</strong> the team shares is physically inside the SM. It's a tiny slab of ultra-fast memory sitting <strong class="hl-green">millimeters from the cores</strong>, reachable through short local wires.
         </p>
 
         <p>
-          If you split a block across two SMs, half the threads would have to reach all the way across the chip to touch that shared scratchpad, which would be no faster than going to slow main memory. The entire speed advantage of sharing would vanish.
+          If you split a block across two SMs, half the threads would have to reach <strong class="hl-red">all the way across the chip</strong> to touch that shared scratchpad, which would be no faster than going to slow main memory. The entire speed advantage of sharing would <strong class="hl-pink">vanish</strong>.
         </p>
 
         <p class="text-blue">
@@ -101,11 +101,11 @@
         </div>
 
         <p>
-          And the same logic explains why the in-block sync you <em>do</em> have only works inside a block. When you tell a block's threads to all wait for each other, that works because they are all in the same room, and the signal travels through fast local wires. One bell in one room, everyone hears it instantly.
+          And the same logic explains why the in-block sync you <em>do</em> have only works inside a block. When you tell a block's threads to all wait for each other, that works because they are all <strong class="hl-green">in the same room</strong>, and the signal travels through <strong class="hl-blue">fast local wires</strong>. One bell in one room, everyone hears it instantly.
         </p>
 
         <p>
-          Try to ring that bell across the whole factory, across dozens of separate SMs, and the signal has to crawl over the slow global buses connecting them. By the time it reached everyone, you would have spent as long as a slow memory access. The barrier was supposed to be fast, and distance destroyed it.
+          Try to ring that bell across the whole factory, across dozens of separate SMs, and the signal has to crawl over the <strong class="hl-red">slow global buses</strong> connecting them. By the time it reached everyone, you would have spent as long as a slow memory access. The barrier was supposed to be fast, and <strong class="hl-yellow">distance destroyed it</strong>.
         </p>
         <!-- DIAGRAM 4: In-Block vs Grid-Wide Sync (k19d) -->
         <div style="margin: calc(var(--grid-size) * 1.5) 0; position: relative; width: 100%;">
@@ -142,11 +142,11 @@
         </div>
 
         <p>
-          And the obvious fix doesn't work either. Why not just pause the running wave, swap in a waiting block, let it reach the barrier, and swap back? Because a GPU cannot cheaply pause a block partway through.
+          And the obvious fix doesn't work either. Why not just pause the running wave, swap in a waiting block, let it reach the barrier, and swap back? Because a GPU <strong class="hl-red">cannot cheaply pause a block partway through</strong>.
         </p>
 
         <p>
-          A block holds its registers and scratchpad on the SM until it completely finishes, and there is no mechanism to yank it out mid-flight. Doing so would mean dumping all its registers out to slow main memory and reloading them later, which is exactly the expensive, locality-destroying thing the GPU is designed to avoid. So unlike a CPU, which casually pauses and resumes tasks all day, a GPU commits an SM to a block until that block is done. No take-backs.
+          A block holds its <strong class="hl-blue">registers and scratchpad</strong> on the SM until it completely finishes, and there is no mechanism to yank it out mid-flight. Doing so would mean dumping all its registers out to slow main memory and reloading them later, which is exactly the expensive, <strong class="hl-pink">locality-destroying</strong> thing the GPU is designed to avoid. So unlike a CPU, which casually pauses and resumes tasks all day, a GPU <strong class="hl-yellow">commits an SM to a block until that block is done</strong>. No take-backs.
         </p>
 
         <!-- DIAGRAM 6: No Preemption (k19f) -->

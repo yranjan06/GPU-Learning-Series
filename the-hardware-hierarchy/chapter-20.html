@@ -50,21 +50,21 @@
         </p>
 
         <p>
-          Start with why it is so much faster. It comes down to one trade that runs through all of hardware: distance and density against speed. The GPU's main memory is huge, tens of gigabytes, because it's built from dense, cheap cells packed tightly and sitting physically far from the cores. All that distance and density is exactly what makes it slow. 
+          Start with why it is so much faster. It comes down to one trade that runs through all of hardware: <strong class="hl-pink">distance and density against speed</strong>. The GPU's main memory is huge, tens of gigabytes, because it's built from dense, cheap cells packed tightly and sitting <strong class="hl-red">physically far from the cores</strong>. All that distance and density is exactly what makes it slow. 
         </p>
 
         <p>
-          Shared memory is the opposite bet. It's built from fast, power-hungry cells sitting right next to the cores, just millimeters away on the silicon. That closeness makes it dramatically faster, on the order of a hundred times, but it also means you only get a tiny amount of it, a few tens of kilobytes per processing unit instead of gigabytes. You buy speed with area, and you can only afford a little.
+          Shared memory is the opposite bet. It's built from fast, power-hungry cells sitting <strong class="hl-green">right next to the cores</strong>, just millimeters away on the silicon. That closeness makes it dramatically faster, on the order of a hundred times, but it also means you only get a tiny amount of it, a few tens of kilobytes per processing unit instead of gigabytes. You <strong class="hl-blue">buy speed with area</strong>, and you can only afford a little.
         </p>
 
         <h2><span class="hl-blue">Control Over the Caches</span></h2>
 
         <p>
-          Now the part that makes shared memory special, beyond just being fast. The GPU already has automatic caches that try to keep useful data close. But those are hardware-managed, guessing on your behalf. Shared memory is the opposite; <strong class="hl-green">you control it</strong>. You decide exactly which data to stage there and when. That control is the whole point, because it lets you turn a pile of slow, repeated trips to main memory into one trip plus many cheap local reuses.
+          Now the part that makes shared memory special, beyond just being fast. The GPU already has automatic caches that try to keep useful data close. But those are hardware-managed, <strong class="hl-red">guessing on your behalf</strong>. Shared memory is the opposite; <strong class="hl-green">you control it</strong>. You decide exactly which data to stage there and when. That control is the whole point, because it lets you turn a pile of slow, repeated trips to main memory into <strong class="hl-blue">one trip plus many cheap local reuses</strong>.
         </p>
 
         <p>
-          Here is the pattern that exploits it, and almost every fast GPU kernel uses some version of it. Imagine you need the same value from main memory not once but many times, say for a long string of multiplications, as happens constantly in matrix work. The naive way is to fetch it from far-off memory every single time, paying the long trip over and over. A hundred uses means a hundred long trips, and the cores starve waiting on every one.
+          Here is the pattern that exploits it, and almost every fast GPU kernel uses some version of it. Imagine you need the same value from main memory not once but many times, say for a long string of multiplications, as happens constantly in matrix work. The naive way is to fetch it from far-off memory every single time, paying the long trip over and over. A hundred uses means a hundred long trips, and <strong class="hl-pink">the cores starve waiting on every one</strong>.
         </p>
 
         <h2><span class="hl-yellow">Tiling: The Smart Way</span></h2>
@@ -73,23 +73,23 @@
           The smart way works in three steps:
         </p>
         <ol style="margin-left: 20px; margin-bottom: var(--grid-size); line-height: 1.8;">
-          <li><strong>First, load once.</strong> The threads cooperate, and one of them pulls the value from main memory into the shared scratchpad, paying the long trip a single time.</li>
-          <li><strong>Second, a barrier.</strong> All the threads in the team wait until the scratchpad is fully loaded before anyone reads from it.</li>
-          <li><strong>Third, reuse fast.</strong> Now every thread reads that value from the scratchpad as many times as it needs, each read costing a handful of cycles instead of hundreds.</li>
+          <li><strong class="text-blue">First, load once.</strong> The threads cooperate, and one of them pulls the value from main memory into the shared scratchpad, paying the <strong class="hl-red">long trip a single time</strong>.</li>
+          <li><strong class="text-blue">Second, a barrier.</strong> All the threads in the team <strong class="hl-yellow">wait until the scratchpad is fully loaded</strong> before anyone reads from it.</li>
+          <li><strong class="text-blue">Third, reuse fast.</strong> Now every thread reads that value from the scratchpad as many times as it needs, each read costing <strong class="hl-green">a handful of cycles instead of hundreds</strong>.</li>
         </ol>
 
         <p class="text-blue">
-          <span class="arrow">↳</span> You paid the long trip once and amortized it across all the reuses. This is called <strong>tiling</strong>, and it's the trick that turns a memory-bound kernel into a compute-bound one, which is exactly what you want.
+          <span class="arrow">↳</span> You paid the long trip once and amortized it across all the reuses. This is called <strong class="hl-yellow">tiling</strong>, and it's the trick that turns a memory-bound kernel into a compute-bound one, which is exactly what you want.
         </p>
 
         <h2><span class="hl-pink">The Barrier and Correctness</span></h2>
 
         <p>
-          That middle step, the barrier, deserves a closer look, because it raises an obvious worry. What if one thread runs ahead and tries to read from the scratchpad before the others have finished filling it? Wouldn't it grab half-loaded garbage and compute a wrong answer?
+          That middle step, the barrier, deserves a closer look, because it raises an obvious worry. What if one thread runs ahead and tries to read from the scratchpad before the others have finished filling it? Wouldn't it grab <strong class="hl-red">half-loaded garbage</strong> and compute a wrong answer?
         </p>
 
         <p>
-          It would, and that is precisely what the barrier prevents. The barrier is a rule that says every thread in the team must arrive at this line before any thread is allowed past it. So the fast threads that finish loading early are forced to stop and wait until the slowest one has placed its piece into the scratchpad. Only when the whole tile is guaranteed complete does anyone start reading. The hardware stalls the eager threads on purpose, trading a tiny wait for correctness. Without it, tiling would silently corrupt your results.
+          It would, and that is precisely what the barrier prevents. The barrier is a rule that says <strong class="hl-blue">every thread in the team must arrive at this line</strong> before any thread is allowed past it. So the fast threads that finish loading early are forced to stop and wait until the slowest one has placed its piece into the scratchpad. Only when the whole tile is guaranteed complete does anyone start reading. The hardware stalls the eager threads on purpose, trading a <strong class="hl-pink">tiny wait for correctness</strong>. Without it, tiling would silently corrupt your results.
         </p>
 
         <h2><span class="hl-blue">The Two Walls</span></h2>
@@ -99,15 +99,15 @@
         </p>
 
         <p>
-          Two walls stop you. The first is the same physics from before. The scratchpad is built from those fast, bulky cells, and main memory from dense, cheap ones. You simply cannot make the scratchpad gigabytes large without it blowing up the chip area and power, leaving no room for the cores. So it stays small by nature, a few tens of kilobytes, and most problems are far bigger than that.
+          Two walls stop you. The first is the <strong class="hl-yellow">same physics from before</strong>. The scratchpad is built from those fast, bulky cells, and main memory from dense, cheap ones. You simply cannot make the scratchpad gigabytes large without it blowing up the chip area and power, leaving no room for the cores. So it <strong class="hl-red">stays small by nature</strong>, a few tens of kilobytes, and most problems are far bigger than that.
         </p>
 
         <p>
-          The second wall is subtler and trips up even experienced people, and it is the idea of <strong class="hl-red">occupancy</strong>. The scratchpad is a fixed pool shared across all the teams running on a processing unit. The more of it each team grabs, the fewer teams can fit at once. Say a unit has a certain amount of scratchpad. If each team uses a modest slice, several teams fit together, and the unit has many groups of threads to juggle. That matters enormously, because the way a GPU hides slow memory is by switching to another ready group whenever one is stuck waiting. Lots of resident teams means there is always someone ready to run.
+          The second wall is subtler and trips up even experienced people, and it is the idea of <strong class="hl-red">occupancy</strong>. The scratchpad is a <strong class="hl-blue">fixed pool shared across all the teams</strong> running on a processing unit. The more of it each team grabs, the fewer teams can fit at once. Say a unit has a certain amount of scratchpad. If each team uses a modest slice, several teams fit together, and the unit has many groups of threads to juggle. That matters enormously, because the way a GPU hides slow memory is by <strong class="hl-green">switching to another ready group</strong> whenever one is stuck waiting. Lots of resident teams means there is always someone ready to run.
         </p>
 
         <p>
-          Now make one team greedy, demanding almost the entire scratchpad. Now only one team fits on the unit. And the moment that single team stalls waiting on main memory, there is no other team to switch to. The cores go idle, because there is no backup work. So you took the fastest memory on the chip, used too much of it, and ended up slower, because you starved the unit of the parallelism it needs to hide delays. This is the counterintuitive heart of it: <strong class="hl-yellow">using more of the fast memory can make the whole thing slower.</strong>
+          Now make one team greedy, demanding almost the entire scratchpad. Now <strong class="hl-pink">only one team fits</strong> on the unit. And the moment that single team stalls waiting on main memory, there is no other team to switch to. The cores go idle, because there is no backup work. So you took the fastest memory on the chip, used too much of it, and ended up slower, because you <strong class="hl-red">starved the unit of the parallelism it needs to hide delays</strong>. This is the counterintuitive heart of it: <strong class="hl-yellow">using more of the fast memory can make the whole thing slower.</strong>
         </p>
 
         <!-- Takeaway -->
