@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Hardware Hierarchy - Chapter 21: Why RAM isn't visible to the GPU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Patrick+Hand&family=Space+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <script src="../script.js" defer></script>
+</head>
+<body>
+
+  <div class="notebook-wrapper">
+
+    <!-- Sidebar Navigation -->
+    <a href="chapter-20.html" class="nav-sidebar nav-prev">← Chapter 20: Why shared memory is fast</a>
+    <a href="chapter-22.html" class="nav-sidebar nav-next">Chapter 22: Kernel launch overhead →</a>
+
+    <!-- Notebook Header -->
+    <div class="notebook-header">
+      <div class="date-row">
+        <span class="date-label">date</span>
+        <span class="date-value">15 / jul / 26</span>
+      </div>
+      <div class="days-row">
+        <span>m</span><span>t</span><span>w</span><span class="active">t</span><span>f</span><span>s</span><span>s</span>
+      </div>
+    </div>
+
+    <!-- Notebook Bordered Box -->
+    <div class="notebook-box">
+
+      <div class="notebook-title-row">
+        <span><span class="title-prefix">THE HARDWARE HIERARCHY — </span>Chapter 21</span>
+        <a href="../toc.html" class="index-link">index</a>
+        <a href="../index.html" class="index-link" style="margin-left: 12px;">home</a>
+      </div>
+
+      <div class="notebook-grid-content">
+
+        <!-- Title -->
+        <h1><span class="hl-pink">Why RAM isn't visible to the GPU</span></h1>
+        <span class="annotation">*two computers, one box, one very narrow bridge*</span>
+
+        <!-- Intro -->
+        <p>
+          People say <strong class="hl-yellow">put it on the GPU</strong> like it's a magic speed button. Sometimes you press it and your code gets slower than a cheap laptop. Understanding why comes down to one fact almost nobody internalizes at first. <strong class="hl-red">Your computer is not one machine</strong>. It's two computers in one box, each with its own separate memory, joined by a single slow bridge. And most of the time the bridge, not the math, decides how fast you go.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> Start with the divide itself. The CPU owns one pile of memory, the system RAM. The GPU owns a completely different pile, its own dedicated VRAM. These are <strong class="hl-red">not the same memory with different labels</strong>. They are different technologies built for opposite goals, and that difference is the whole story.
+        </p>
+
+        <h2><span class="hl-blue">Two Memories Built for Opposite Goals</span></h2>
+
+        <p>
+          <strong class="hl-green">System RAM is tuned for low latency.</strong> The CPU mostly does one branchy, sequential thing at a time, so it wants a single item back instantly. <strong class="hl-pink">VRAM is tuned for raw throughput.</strong> The GPU has thousands of cores that all want a flood of data at the same instant, so VRAM is built to deliver a huge gush rather than a quick single hit.
+        </p>
+
+        <p>
+          And here is the question that exposes why you can't just use the fast one everywhere. If low latency means getting a byte instantly, shouldn't the GPU want that too? Wouldn't its threads compute faster pulling from the snappy CPU memory?
+        </p>
+
+        <p>
+          With one thread, yes. But a GPU has <strong class="hl-yellow">ten thousand</strong>. Picture the low-latency memory as a vending machine that drops one snack instantly — wonderful for one person. But line up ten thousand threads at that one machine and thread number ten thousand waits through ten thousand presses. <strong class="hl-red">The instant response is destroyed by the queue.</strong> Now picture the GPU memory as a dump truck that takes longer to arrive but then drops ten thousand snacks on the floor at once, so every thread grabs its own at the same moment. <strong class="hl-green">The slower start wins because the throughput serves everyone together.</strong>
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> You physically cannot build one memory that does both at once, so the two computers keep two different memories. Which also kills the dream of one big shared pool — because the fast GPU memory only hits its enormous speed when it's physically stacked against the GPU die, and you can't put it next to the CPU too.
+        </p>
+
+        <h2><span class="hl-red">The Bridge — Villain of the Story</span></h2>
+
+        <p>
+          Now the bridge between these two worlds, and it is the villain of this whole story. The two memories are joined by a connection called the <strong class="hl-pink">PCIe bus</strong>. Inside the GPU, data moves at well over a <strong class="hl-green">thousand gigabytes per second</strong> — an internal superhighway. The bridge between CPU and GPU moves only a few tens of gigabytes per second. So the bridge is something like <strong class="hl-red">fifteen to thirty times narrower</strong> than the highway it feeds. Every single byte that crosses from the CPU side to the GPU side squeezes through that choke point.
+        </p>
+
+        <h2><span class="hl-yellow">The Copy-Compute-Copy Dance</span></h2>
+
+        <p>
+          Because the two memories are separate, you can't just compute. You have to do a <strong class="hl-blue">three-step dance</strong> every time. First, copy the input data across the narrow bridge into GPU memory. Second, launch the work, which runs on data now sitting in GPU memory. Third, copy the result back across the bridge. <strong class="hl-pink">Copy in, compute, copy out.</strong> And those three steps are serial — you cannot compute on data that's still crossing the bridge.
+        </p>
+
+        <h2><span class="hl-red">Amdahl's Law — The Trap That Catches Everyone</span></h2>
+
+        <p>
+          Now the trap that catches everyone, and it has a name worth knowing: <strong class="hl-red">Amdahl's Law</strong>. Say the actual GPU math takes 1 millisecond — blazing. But moving the data across the narrow bridge takes 100 milliseconds. Your real wall-clock time is 101 milliseconds, <strong class="hl-yellow">almost entirely bridge</strong>. Meanwhile a plain CPU, with the data already sitting right next to it, might finish the whole job in 20. So the GPU, despite doing the math fifty times faster, <strong class="hl-pink">made the program five times slower</strong>.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> The lesson is brutal and simple. What matters is the <strong class="hl-blue">total time on the clock</strong>, not how fast the math units can theoretically go. A GPU starved for data, waiting on the bridge, is not helping you.
+        </p>
+
+        <h2><span class="hl-green">When Is the GPU Actually Worth It?</span></h2>
+
+        <p>
+          Only when the <strong class="hl-green">compute time dwarfs the transfer time</strong>. If you cross the bridge once and then grind on that data for thousands of steps without going back, the one-time crossing cost becomes a rounding error against all the math. The ratio of math to bytes moved has to be high. And that points straight at the defenses.
+        </p>
+
+        <h2><span class="hl-blue">Defense 1: Reuse — Do Enormous Math Per Byte</span></h2>
+
+        <p>
+          The first defense is <strong class="hl-yellow">reuse</strong> — do enormous math per byte. The perfect GPU job uploads data once, performs a mountain of operations on every element, and sends back a tiny result. Training a neural network is exactly this: you load the weights and a batch, then run an enormous number of operations on them <strong class="hl-green">without touching the CPU again</strong>. Multiplying two large matrices does work that grows with the <strong class="hl-blue">cube of the size</strong> while the data only grows with the square, so the bigger the problem, the more the math drowns out the transfer. <strong class="hl-pink">High math-to-bytes is what makes the bridge crossing worth it.</strong>
+        </p>
+
+        <h2><span class="hl-blue">Defense 2: Overlap — Called Streams</span></h2>
+
+        <p>
+          The second defense is <strong class="hl-yellow">overlap</strong>, called streams. The idea is: why let the bridge sit idle while the GPU computes, and why let the GPU sit idle while the bridge copies? So you chop the data into chunks and <strong class="hl-green">pipeline them</strong>. While the GPU computes on chunk two, the bridge is already hauling chunk three in, and hauling chunk one's result back out. Done well, <strong class="hl-blue">the transfer hides behind the compute</strong>, and your total time becomes the longer of the two instead of their sum.
+        </p>
+
+        <p>
+          But this only works if the compute per chunk is big enough to cover the next chunk's transfer. If your math is too light, the GPU finishes a chunk and then sits waiting for the next one to arrive anyway. <strong class="hl-red">You didn't hide the transfer — you just chopped your idle time into smaller pieces.</strong>
+        </p>
+
+        <h2><span class="hl-blue">Defense 3: Unified Memory — Convenience, Not a Fix</span></h2>
+
+        <p>
+          The third thing people reach for is <strong class="hl-pink">unified memory</strong>, where you use one pointer that both the CPU and GPU can touch, and the system moves data behind the scenes so you don't write the copies yourself. And the question it begs is: if the system handles it automatically, isn't the problem solved?
+        </p>
+
+        <p>
+          It isn't. Unified memory is a <strong class="hl-yellow">convenience in the code, not a change in the physics</strong>. Under the hood the pages still cross the same narrow bridge. When the GPU touches data still living on the CPU side, the hardware stops dead, faults, and the system scrambles to copy that page across before resuming. If your access pattern jumps around randomly, you trigger a <strong class="hl-red">storm of page faults</strong> and end up slower than if you had just done one clean bulk copy yourself. <strong class="hl-pink">The syntax got easier. The bridge did not get wider.</strong>
+        </p>
+
+        <h2><span class="hl-red">The Tempting Shortcut That Makes It Worse</span></h2>
+
+        <p>
+          And to see the bridge at its absolute worst, consider the tempting shortcut: why copy at all? Why not let the GPU just reach across the bridge for each value as it computes? Because then every single math instruction — something that should take a cycle or two — now <strong class="hl-red">waits on a full round trip across the slowest connection in the machine</strong>. Instead of hiding memory delay, you've wired the slowest bus directly into the math loop, and the cores spend nearly all their time frozen, waiting for signals to crawl across the motherboard. <strong class="hl-pink">The only winning move is to pay the crossing cost once</strong>, get the data into fast GPU memory, and then feast on that internal superhighway.
+        </p>
+
+        <!-- Takeaway -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+          <p>
+            Your machine is two computers with two separate memories built for opposite goals, joined by a bridge far narrower than either side's internal speed. Every byte that crosses is expensive, the work is a serial copy-compute-copy dance, and a fast math kernel trapped behind a slow transfer is slower overall than never using the GPU at all.
+          </p>
+          <p>
+            The GPU only wins when the math per byte is huge, or when you cleverly hide the transfer behind compute.
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            The bottleneck is almost never the math.<br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">It's moving the data to where the math can happen.</span><br>
+            The bridge is the real enemy.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>
