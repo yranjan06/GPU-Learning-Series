@@ -42,12 +42,108 @@
 
         <!-- Title -->
         <h1><span class="hl-pink">Why race conditions happen</span></h1>
-        <span class="annotation">*insert subtext here*</span>
+        <span class="annotation">*the lottery*</span>
 
         <!-- Intro -->
         <p>
-          [Content for chapter 24 goes here]
+          Launch two threads. Both run the same one line, increment a counter. The counter starts at zero. What is the final value? It feels obvious that it is two, one for each thread. But it might be one. Two increments went in and only one came out, and nothing crashed, nothing warned you. Your program is just quietly wrong. This is a <strong class="hl-pink">race condition</strong>, where correctness depends on the unpredictable timing of who runs when. Understanding it is the difference between a kernel you can trust and a kernel that lies to you on some runs and not others.
         </p>
+
+        <h2><span class="hl-yellow">The Trap: Read-Modify-Write</span></h2>
+
+        <p>
+          Start with why incrementing a counter is dangerous, because it looks harmless. The trap is that increment is not one operation. It is three. First the thread reads the counter's current value out of memory into a private register. Then it adds one to that register. Then it writes the register back to memory. <strong class="hl-green">Read, modify, write.</strong> Three separate steps with real gaps between them, and those gaps are where the disaster lives.
+        </p>
+
+        <p>
+          Walk two threads through it in the unlucky order. Thread A reads the counter and sees zero. Before thread A writes anything back, thread B also reads the counter, and it also sees zero, because A hasn't written yet. Now both threads hold zero in their private registers. Both add one, both compute one. Thread A writes one back. Then thread B writes one back, right on top of A's result.
+        </p>
+
+        <p class="text-red">
+          <span class="arrow">↳</span> The counter ends at one. Thread B never saw A's update, because it read the value before A's write had landed. One of the two increments simply evaporated. Scale this to ten thousand threads and you don't get ten thousand, you get some smaller, random number that changes every run.
+        </p>
+
+        <h2><span class="hl-blue">Is it a bug, or the hardware?</span></h2>
+
+        <p>
+          Now the natural question. Is this just a bug in my code, or is the hardware actually working against me? It is the hardware, by design, for three concrete reasons.
+        </p>
+
+        <ol>
+          <li><strong class="hl-yellow">Scheduling is a lottery:</strong> The order threads run in is not predictable. The scheduler on each processing unit runs whichever group of threads happens to have its data ready, and swaps groups in and out as they stall on memory. You cannot know which thread reaches the counter first. The lottery is not an accident, it is the normal way the machine operates.</li>
+          <li><strong class="hl-blue">Multiple steps:</strong> The read-modify-write is genuinely multiple steps, so there is always a window between reading and writing where another thread can slip in and read the same stale value.</li>
+          <li><strong class="hl-pink">Delayed visibility:</strong> A write does not appear to everyone instantly. It takes time to travel through the layers of memory and caches before other threads can see it. So a reader can grab the old value from its own cache before the new one has propagated across. Even threads close together do not have a perfectly shared, instant view of memory.</li>
+        </ol>
+
+        <h2><span class="hl-pink">Why the barrier fails here</span></h2>
+
+        <p>
+          So how do you fix it? And here is the most important and most misunderstood point in all of this. <strong class="hl-red">The barrier you use to make threads wait for each other does not fix this race.</strong>
+        </p>
+
+        <p>
+          It is tempting to think, just make everyone pause between reading and writing. But watch it fail. Every thread reads the counter before the pause, so they all see the same value. Then they all wait at the pause. Then they all write their incremented value, and the last one to write still stomps on everyone else.
+        </p>
+
+        <p class="text-blue">
+          <span class="arrow">↳</span> The pause synchronized the phases, everyone read then everyone wrote, but it did nothing to protect the single update from being overwritten. A barrier orders when things happen, it does not make the three-step increment indivisible.
+        </p>
+
+        <h2><span class="hl-green">The Real Fix: Atomics</span></h2>
+
+        <p>
+          What actually fixes it is an <strong class="hl-green">atomic operation</strong>. An atomic increment performs the read, the modify, and the write as one single indivisible hardware transaction.
+        </p>
+
+        <p>
+          While one thread is doing it, the hardware locks that memory location so no other thread can read or write it until the whole read-modify-write is complete. The threads are forced to take turns on that one spot. So ten thousand atomic increments correctly produce ten thousand, because none of them can slip into the gap of another, there is no gap.
+        </p>
+
+        <p class="text-red">
+          <span class="arrow">↳</span> The cost is that it is slower than a plain increment, because it serializes access. Threads line up for that location instead of charging in parallel. But slow and correct beats fast and wrong.
+        </p>
+
+        <p>
+          It is worth being precise about when a barrier is the right tool and when it is not, because both exist for real reasons. A barrier is perfect for a <strong class="hl-blue">single-writer, many-reader</strong> pattern. One thread computes a value and writes it, everyone hits the barrier so that write is guaranteed done and visible, then everyone safely reads it. No race, because only one thread ever writes. The barrier protects readers from seeing a half-finished write. 
+        </p>
+
+        <p>
+          Atomics are for the opposite situation, <strong class="hl-pink">many threads all updating the same location</strong>, where you need each update to survive. Use the barrier to separate a writing phase from a reading phase. Use atomics when many writers hit one spot. They solve different problems and are not interchangeable.
+        </p>
+
+        <h2><span class="hl-yellow">The Warp-Level Sync</span></h2>
+
+        <p>
+          There is also a finer-grained cousin of the block barrier worth knowing. The full barrier makes every thread in the whole block wait, and it lives in the block's shared memory hardware. But sometimes you only need the 32 threads of a single warp to agree, and for that there is a lighter warp-level sync.
+        </p>
+
+        <p>
+          And this raises a fair question. Don't the 32 threads of a warp already run in perfect lockstep, so why sync them at all? They used to, but on modern hardware that is no longer guaranteed.
+        </p>
+
+        <p>
+          Newer architectures let threads within the same warp drift to different points in the program and reconverge, so you can no longer assume that if one thread in a warp wrote something, its neighbor has already seen it. The warp-level sync makes the 32 threads line up and agree on memory, and it is cheaper than the full block barrier because it only involves one warp's worth of hardware, not the whole block. If all you need is agreement inside a warp, reach for the lighter one.
+        </p>
+
+        <!-- Takeaway -->
+        <div style="margin-top: calc(var(--grid-size) * 2); margin-bottom: var(--grid-size); border-left: 3px solid var(--ink-red); padding-left: 20px;">
+          <h2 class="text-red" style="font-family: 'Patrick Hand', cursive; font-size: 32px; margin-bottom: var(--grid-size);">
+            ↳ The General Takeaway
+          </h2>
+
+          <p>
+            So the whole picture. A race condition is when your answer depends on the accidental timing of threads, and it strikes hardest on read-modify-write, because that trio of steps has gaps that another thread can invade, leaving updates to vanish silently.
+          </p>
+
+          <p>
+            The hardware makes this the default through unpredictable scheduling, multi-step updates, and delayed propagation. A barrier does not save you here, it only orders phases, it cannot make an increment indivisible. Atomics are the real fix for many-writer updates, locking the location so each update survives at the cost of serializing.
+          </p>
+
+          <p class="handwritten-highlight text-red" style="text-align: center; margin-top: var(--grid-size);">
+            Shared memory on a GPU is a commons with no automatic protection. <br>
+            <span class="hl-yellow" style="font-family: inherit; font-size: inherit;">The hardware will not stop you from writing wrong code, it will just quietly give you a different wrong answer every time.</span>
+          </p>
+        </div>
 
       </div>
     </div>
